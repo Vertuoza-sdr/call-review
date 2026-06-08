@@ -1241,28 +1241,6 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
               <div key={f} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 20, padding: "5px 12px", fontSize: 12, color: V.s5 }}>{f}</div>
             ))}
           </div>
-
-          {/* Live activity feed */}
-          <div style={{ background: "rgba(0,0,0,0.3)", border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 14, padding: "14px 16px", maxWidth: 420 }}>
-            <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: V.neon, display: "inline-block", animation: "pulse 1.5s ease-in-out infinite" }}/>
-              Activité en direct
-            </div>
-            {[
-              { time: "il y a 2min", event: "Julie a atteint le rang 🥈 Silver", color: "#C0C0C0" },
-              { time: "il y a 8min", event: "Maxime a validé l'objectif CLOSING", color: "#10B981" },
-              { time: "il y a 15min", event: "Thomas a analysé 3 calls aujourd'hui ✅", color: V.orange },
-              { time: "il y a 1h", event: "Sarah a débloqué l'écusson ⚔️ Trio du Jour", color: V.neon },
-            ].map((a, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: i < 3 ? 8 : 0, marginBottom: i < 3 ? 8 : 0, borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: a.color, flexShrink: 0, marginTop: 5 }}/>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: V.white, lineHeight: 1.4 }}>{a.event}</div>
-                  <div style={{ fontSize: 10, color: V.s4, marginTop: 2 }}>{a.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Ticker en bas */}
