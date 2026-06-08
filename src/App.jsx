@@ -1042,22 +1042,20 @@ export default function App() {
     if (page === "detail") setPage("history");
   };
 
-  const clearAllObjectives = async (targetUserId = null) => {
+  const clearAllObjectives = async (targetUserId) => {
+    // S'assurer que targetUserId est bien un string UID, pas un event
+    const uid = (typeof targetUserId === "string" && targetUserId.length > 5) ? targetUserId : null;
     if (!window.confirm("Supprimer tous les objectifs ?")) return;
     try {
       let snap;
-      if (targetUserId && typeof targetUserId === "string") {
-        snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", targetUserId)));
-      } else if (isAdmin) {
-        snap = await getDocs(collection(db, "objectives"));
-      } else {
-        const uid = user?.uid;
-        if (!uid) return;
+      if (uid) {
         snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", uid)));
+      } else {
+        snap = await getDocs(collection(db, "objectives"));
       }
       console.log("Objectifs à supprimer:", snap.docs.length);
       for (const d of snap.docs) await deleteDoc(doc(db, "objectives", d.id));
-    } catch (e) { console.error("Erreur suppression:", e); alert("Erreur : " + e.message); }
+    } catch (e) { console.error("Erreur:", e); alert("Erreur : " + e.message); }
   };
 
   const handleAnalyze = async () => {
