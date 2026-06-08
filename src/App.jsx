@@ -663,6 +663,197 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
   );
 }
 
+// ── Coach Cinematic ───────────────────────────────────────────────────────────
+function CoachCinematic() {
+  const [phase, setPhase] = useState(0);
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [dots, setDots] = useState("");
+
+  const phases = [
+    {
+      label: "Écoute du call", icon: "📞", color: V.neon,
+      messages: [
+        "Hmm… intéressant comme ouverture.",
+        "Je note la façon dont il aborde le prospect…",
+        "Ah, il y a quelque chose à améliorer ici.",
+        "Bonne accroche ! On continue…",
+      ]
+    },
+    {
+      label: "Analyse comportementale", icon: "🧠", color: "#8B5CF6",
+      messages: [
+        "Le ratio parole/écoute… laisse à désirer.",
+        "La qualification du décisionnaire… pas terrible.",
+        "Vocabulaire BTP ? Je vérifie…",
+        "Ce passage sur les objections, il faut qu'on en parle.",
+      ]
+    },
+    {
+      label: "Rédaction des scripts experts", icon: "🎙️", color: V.orange,
+      messages: [
+        "Voici ce que j'aurais dit à sa place…",
+        "Conseil en cours de rédaction…",
+        "Je formule les meilleures pratiques terrain…",
+        "Presque, encore quelques ajustements…",
+      ]
+    },
+    {
+      label: "Génération des objectifs", icon: "🎯", color: "#10B981",
+      messages: [
+        "3 objectifs prioritaires identifiés.",
+        "Je prépare ton plan de progression…",
+        "Les badges déblocables sont en cours d'évaluation…",
+        "Dernière ligne droite, courage !",
+      ]
+    },
+  ];
+
+  // Avancer les phases toutes les 9 secondes
+  useEffect(() => {
+    const t = setInterval(() => {
+      setPhase(p => Math.min(p + 1, phases.length - 1));
+      setMsgIdx(0);
+      setScore(s => Math.min(s + Math.round(Math.random() * 22 + 18), 99));
+    }, 9000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Changer les messages toutes les 2.5s
+  useEffect(() => {
+    const t = setInterval(() => {
+      setMsgIdx(i => (i + 1) % phases[phase].messages.length);
+    }, 2500);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  // Dots animés
+  useEffect(() => {
+    const t = setInterval(() => setDots(d => d.length >= 3 ? "" : d + "."), 400);
+    return () => clearInterval(t);
+  }, []);
+
+  // Score qui monte
+  useEffect(() => {
+    const t = setInterval(() => {
+      setScore(s => s < 87 ? s + Math.round(Math.random() * 3) : s);
+    }, 300);
+    return () => clearInterval(t);
+  }, []);
+
+  const currentPhase = phases[phase];
+  const progress = ((phase + 1) / phases.length) * 100;
+
+  return (
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", fontFamily: "'Gantari',sans-serif" }}>
+
+      {/* Téléphone animé SVG */}
+      <div style={{ position: "relative", marginBottom: 32 }}>
+        {/* Glow */}
+        <div style={{ position: "absolute", inset: -30, background: `radial-gradient(ellipse, ${currentPhase.color}30 0%, transparent 70%)`, transition: "background .8s" }}/>
+
+        <svg width={90} height={130} viewBox="0 0 90 130" style={{ position: "relative", zIndex: 1 }}>
+          {/* Corps téléphone */}
+          <rect x={8} y={4} width={74} height={122} rx={14} fill="#0D0D1F" stroke={currentPhase.color} strokeWidth={2.5}/>
+          {/* Écran */}
+          <rect x={14} y={16} width={62} height={90} rx={6} fill={`${currentPhase.color}15`}/>
+          {/* Bouton home */}
+          <circle cx={45} cy={118} r={5} fill="none" stroke={currentPhase.color} strokeWidth={1.5} opacity={0.6}/>
+          {/* Caméra */}
+          <circle cx={45} cy={10} r={2.5} fill={currentPhase.color} opacity={0.5}/>
+
+          {/* Contenu écran — icône de la phase */}
+          <text x={45} y={55} textAnchor="middle" fontSize={28}>{currentPhase.icon}</text>
+
+          {/* Score sur l'écran */}
+          <text x={45} y={80} textAnchor="middle" fill={currentPhase.color} fontSize={18} fontWeight={900}>{score}</text>
+          <text x={45} y={92} textAnchor="middle" fill={currentPhase.color} fontSize={8} opacity={0.7}>SCORE</text>
+
+          {/* Barres wifi animées */}
+          {[0,1,2].map(i => (
+            <rect key={i} x={20+i*8} y={100-i*5} width={5} height={5+i*5} rx={1.5}
+              fill={currentPhase.color} opacity={phase >= i ? 0.9 : 0.2}/>
+          ))}
+        </svg>
+
+        {/* Onde sonore gauche */}
+        <div style={{ position: "absolute", left: -24, top: "30%", display: "flex", flexDirection: "column", gap: 4 }}>
+          {[20,32,24,36,20].map((h, i) => (
+            <div key={i} style={{ width: 3, height: h, background: currentPhase.color, borderRadius: 2, opacity: 0.6, animation: `pulse ${0.4 + i*0.1}s ease-in-out infinite alternate`, transition: "background .5s" }}/>
+          ))}
+        </div>
+        {/* Onde sonore droite */}
+        <div style={{ position: "absolute", right: -24, top: "30%", display: "flex", flexDirection: "column", gap: 4 }}>
+          {[24,36,20,32,28].map((h, i) => (
+            <div key={i} style={{ width: 3, height: h, background: currentPhase.color, borderRadius: 2, opacity: 0.6, animation: `pulse ${0.5 + i*0.1}s ease-in-out infinite alternate`, transition: "background .5s" }}/>
+          ))}
+        </div>
+      </div>
+
+      {/* Message coach — bulle */}
+      <div style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${currentPhase.color}30`, borderRadius: 16, padding: "14px 24px", marginBottom: 24, maxWidth: 380, textAlign: "center", minHeight: 56, display: "flex", alignItems: "center", justifyContent: "center", transition: "border-color .5s" }}>
+        <div style={{ fontSize: 15, color: V.white, fontWeight: 500, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 18, marginRight: 8 }}>🤖</span>
+          {phases[phase].messages[msgIdx]}<span style={{ color: currentPhase.color }}>{dots}</span>
+        </div>
+      </div>
+
+      {/* Phase label */}
+      <div style={{ fontSize: 11, color: currentPhase.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: "2px", marginBottom: 20, transition: "color .5s" }}>
+        {currentPhase.icon} {currentPhase.label}
+      </div>
+
+      {/* Barre de progression globale */}
+      <div style={{ width: 320, marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          {phases.map((p, i) => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: i <= phase ? `${p.color}20` : "rgba(255,255,255,0.05)", border: `2px solid ${i <= phase ? p.color : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, transition: "all .5s" }}>
+                {i < phase ? "✓" : p.icon}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${progress}%`, background: `linear-gradient(90deg, ${V.blue}, ${currentPhase.color})`, borderRadius: 10, transition: "width 1s ease, background 0.8s" }}/>
+        </div>
+      </div>
+
+      {/* Motivations rotatives */}
+      <div style={{ fontSize: 12, color: V.s5, fontStyle: "italic", textAlign: "center" }}>
+        {["💪 Chaque call analysé te rapproche du rang Gold","🔥 Les meilleurs SDR ne s'arrêtent jamais d'apprendre","🎯 Ton coach IA travaille pour toi en ce moment","⚡ Patience — la précision prend du temps","🏆 Bientôt un nouvel écusson peut-être ?"][Math.floor(Date.now() / 5000) % 5]}
+      </div>
+
+    </div>
+  );
+}
+
+// ── Coach Cinematic Loading ───────────────────────────────────────────────────
+const CINEMATIC_STEPS = [
+  { phase: 0.00, icon: "📞", msg: "Écoute du call en cours…",               sub: "Chargement du transcript",                color: "#00FFFB" },
+  { phase: 0.08, icon: "👂", msg: "Hmm… intéressant comme ouverture.",       sub: "Analyse de la posture et du ton",         color: "#00FFFB" },
+  { phase: 0.16, icon: "🤔", msg: "Attends… il a oublié de qualifier ça.",   sub: "Évaluation de la discovery",              color: V.orange  },
+  { phase: 0.24, icon: "📊", msg: "Calcul du ratio parole en cours…",        sub: "40% SDR / 60% prospect idéalement",       color: V.blue    },
+  { phase: 0.30, icon: "💡", msg: "Ah ! Bonne gestion de l'objection prix.", sub: "Analyse du pitch et des objections",      color: "#10B981" },
+  { phase: 0.38, icon: "📞", msg: "Le closing… voyons voir…",                sub: "Évaluation de l'engagement prospect",     color: V.orange  },
+  { phase: 0.45, icon: "⚡", msg: "L'énergie sur ce call est notable !",     sub: "Mesure de la conviction et du dynamisme", color: "#FFD700" },
+  { phase: 0.52, icon: "🎯", msg: "Identification des axes prioritaires…",   sub: "Croisement des 20 critères Vertuoza",     color: "#8B5CF6" },
+  { phase: 0.60, icon: "🧠", msg: "Génération des scripts experts…",         sub: "Formulations optimisées BTP en cours",    color: V.neon    },
+  { phase: 0.68, icon: "📝", msg: "Rédaction des plans de progression…",     sub: "Phrases types Vertuoza personnalisées",   color: V.blue    },
+  { phase: 0.76, icon: "🎓", msg: "Définition de tes 3 objectifs coach…",   sub: "Basé sur tes points les plus faibles",    color: V.orange  },
+  { phase: 0.84, icon: "🏆", msg: "Presque terminé — finalisation…",         sub: "Sauvegarde automatique en cours",         color: "#10B981" },
+  { phase: 0.92, icon: "✅", msg: "Analyse complète ! Résultats prêts.",     sub: "Ton coaching personnalisé est là",        color: "#FFD700" },
+];
+
+const MOTIVATIONS = [
+  "Les meilleurs SDR analysent chaque call. Tu fais partie de l'élite. 💪",
+  "Chaque analyse te rapproche du rang Gold. Continue comme ça ! 🏆",
+  "Un call analysé = un concurrent distancé. Belle mentalité. 🚀",
+  "Les données ne mentent pas. Tu vas progresser. 📈",
+  "Vertuoza + toi = la combinaison gagnante dans le BTP. 🔥",
+];
+
+
 // ── App principale ────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
@@ -1144,13 +1335,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
 
         {/* ══ REVIEW ══════════════════════════════════════════════════════════════ */}
         {page === "review" && (<>
-          {loading && (
-            <div style={{ textAlign: "center", padding: 80 }}>
-              <div style={{ width: 50, height: 50, border: `3px solid ${V.neon}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 20px" }}/>
-              <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Analyse en cours…</div>
-              <div style={{ fontSize: 13, color: V.s5 }}>Scores • Scripts experts • Plans de progression</div>
-            </div>
-          )}
+          {loading && <CoachCinematic/>}
           {!loading && (<>
             <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
               {[["review","🎯 Critères"],["summary","📊 Synthèse"]].map(([id,lbl]) => (
