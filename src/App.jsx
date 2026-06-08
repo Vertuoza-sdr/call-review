@@ -285,6 +285,7 @@ function FifaCard({ name, avg, medal, reviews }) {
   const [editing, setEditing] = useState(false);
   const [inputVal, setInputVal] = useState(photoUrl);
   const [imgError, setImgError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const savePhoto = () => {
     setPhotoUrl(inputVal);
@@ -293,28 +294,29 @@ function FifaCard({ name, avg, medal, reviews }) {
     setImgError(false);
   };
 
+  // Couleurs selon médaille — vraies couleurs attractives
   const cardColors = {
-    "Gold":     { bg: "#1a1200", border: "#FFD700", accent: "#FFD700", shine: "#FFD70030", text: "#FFE566" },
-    "Silver":   { bg: "#111820", border: "#C0C0C0", accent: "#C0C0C0", shine: "#C0C0C020", text: "#D8D8D8" },
-    "Bronze":   { bg: "#1a0d00", border: "#CD7F32", accent: "#CD7F32", shine: "#CD7F3220", text: "#E8A060" },
-    "Rookie":   { bg: "#0a0e1a", border: V.blue,    accent: V.neon,    shine: "#003FDA20", text: V.neon   },
-    "Débutant": { bg: "#0a0a14", border: V.s4,      accent: V.s5,      shine: "#52588220", text: V.s5     },
+    "Gold":     { bg1: "#1C1000", bg2: "#2A1A00", border: "#FFD700", accent: "#FFD700", text: "#FFF0A0", glow: "#FFD70060" },
+    "Silver":   { bg1: "#0D1520", bg2: "#162235", border: "#7EB8E0", accent: "#A8D8F0", text: "#D0EEFF", glow: "#7EB8E060" },
+    "Bronze":   { bg1: "#180A00", bg2: "#281200", border: "#E8943A", accent: "#F0A850", text: "#FFD090", glow: "#E8943A60" },
+    "Rookie":   { bg1: "#001030", bg2: "#001D50", border: "#003FDA", accent: "#00FFFB", text: "#80FFFD", glow: "#00FFFB60" },
+    "Débutant": { bg1: "#0A0A18", bg2: "#121228", border: "#525882", accent: "#99B2F0", text: "#BDD0FF", glow: "#52588260" },
   };
   const C = cardColors[medal.label] || cardColors["Débutant"];
 
-  const statMap = [
-    { key: "OUV", sectionIdx: 0 },
-    { key: "DIS", sectionIdx: 1 },
-    { key: "PIT", sectionIdx: 2 },
-    { key: "CLO", sectionIdx: 3 },
-  ];
-
+  // Stats réelles en % (pas de conversion FIFA)
   const getStat = (sIdx) => {
-    if (!reviews.length) return 40;
+    if (!reviews.length) return 0;
     const section = CRITERIA[sIdx];
-    const a = Math.round(reviews.reduce((acc, r) => acc + sectionPct(section, r.scores || {}), 0) / reviews.length);
-    return Math.max(40, Math.min(99, Math.round(40 + (a / 100) * 59)));
+    return Math.round(reviews.reduce((acc, r) => acc + sectionPct(section, r.scores || {}), 0) / reviews.length);
   };
+
+  const statMap = [
+    { key: "OUV", label: "Ouverture",  sectionIdx: 0, icon: "🎯" },
+    { key: "DIS", label: "Discovery",  sectionIdx: 1, icon: "🔍" },
+    { key: "PIT", label: "Pitch",      sectionIdx: 2, icon: "💬" },
+    { key: "CLO", label: "Closing",    sectionIdx: 3, icon: "🚀" },
+  ];
 
   const totalCalls = reviews.length;
   const weekCalls = reviews.filter(r => {
@@ -322,120 +324,244 @@ function FifaCard({ name, avg, medal, reviews }) {
     const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
     return (new Date() - d) < 7 * 86400000;
   }).length;
-  const overallRating = avg ? Math.max(40, Math.min(99, Math.round(40 + (avg / 100) * 59))) : 40;
+
+  const bestCall = reviews.length ? Math.max(...reviews.map(r => r.globalPct || 0)) : 0;
+  const trend = reviews.length >= 2
+    ? (reviews[0].globalPct || 0) - (reviews[1].globalPct || 0)
+    : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-      <div style={{
-        width: 220, position: "relative",
-        background: C.bg, border: `2px solid ${C.border}`,
-        borderRadius: 16, padding: "20px 18px 18px",
-        boxShadow: `0 0 30px ${C.shine}, inset 0 0 60px ${C.shine}`,
-        fontFamily: "'Gantari',sans-serif", overflow: "hidden",
-      }}>
-        {/* Shine overlay */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: C.shine, borderRadius: "14px 14px 50% 50%", pointerEvents: "none" }}/>
+    <>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
 
-        {/* Top row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, position: "relative", zIndex: 1 }}>
-          <div>
-            <div style={{ fontSize: 40, fontWeight: 800, color: C.text, lineHeight: 1, letterSpacing: "-2px" }}>{overallRating}</div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.accent, letterSpacing: "2px", textTransform: "uppercase" }}>SDR</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 22 }}>{medal.icon}</div>
-            <div style={{ fontSize: 9, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{medal.label}</div>
-            <Stars count={medal.stars} color={C.accent}/>
-          </div>
-        </div>
-
-        {/* Avatar — photo ou initiales */}
+        {/* ── La carte ── */}
         <div
-          onClick={() => setEditing(true)}
-          title="Clique pour changer ta photo"
+          onClick={() => !editing && setShowModal(true)}
           style={{
-            width: 80, height: 80, borderRadius: "50%", margin: "0 auto 12px",
-            border: `2px solid ${C.accent}60`, overflow: "hidden",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            position: "relative", zIndex: 1, cursor: "pointer",
-            background: `${C.accent}20`,
-          }}>
-          {photoUrl && !imgError ? (
-            <img src={photoUrl} alt={name} onError={() => setImgError(true)}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
-          ) : (
-            <div style={{ fontSize: 28, fontWeight: 800, color: C.text, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-              <span>{name.slice(0, 2).toUpperCase()}</span>
-              <span style={{ fontSize: 8, color: `${C.accent}80`, fontWeight: 500 }}>+ photo</span>
+            width: 230, position: "relative",
+            background: `linear-gradient(160deg, ${C.bg2} 0%, ${C.bg1} 100%)`,
+            border: `1.5px solid ${C.border}`,
+            borderRadius: 20,
+            padding: "0 0 16px",
+            boxShadow: `0 8px 40px ${C.glow}, 0 0 0 1px ${C.border}20`,
+            fontFamily: "'Gantari',sans-serif",
+            overflow: "hidden",
+            cursor: editing ? "default" : "pointer",
+            transition: "transform .2s, box-shadow .2s",
+          }}
+          onMouseEnter={e => { if (!editing) { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 16px 50px ${C.glow}, 0 0 0 1px ${C.border}40`; }}}
+          onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 8px 40px ${C.glow}, 0 0 0 1px ${C.border}20`; }}
+        >
+          {/* Header coloré */}
+          <div style={{ background: `${C.border}18`, borderBottom: `1px solid ${C.border}30`, padding: "12px 16px 10px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: C.text, lineHeight: 1, letterSpacing: "-1px" }}>{avg || 0}%</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: C.accent, letterSpacing: "2.5px", textTransform: "uppercase", marginTop: 2 }}>Score global</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 24, lineHeight: 1 }}>{medal.icon}</div>
+              <div style={{ fontSize: 9, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginTop: 2 }}>{medal.label}</div>
+              <Stars count={medal.stars} color={C.accent}/>
+            </div>
+          </div>
+
+          {/* Photo */}
+          <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              onClick={e => { e.stopPropagation(); setInputVal(photoUrl); setEditing(true); }}
+              title="Clique pour changer ta photo"
+              style={{
+                width: 64, height: 64, borderRadius: 12, flexShrink: 0,
+                border: `2px solid ${C.accent}50`, overflow: "hidden",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: `${C.accent}15`, cursor: "pointer", position: "relative",
+              }}>
+              {photoUrl && !imgError ? (
+                <img src={photoUrl} alt={name} onError={() => setImgError(true)} style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+              ) : (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{name.slice(0, 2).toUpperCase()}</div>
+                  <div style={{ fontSize: 7, color: `${C.accent}90` }}>📷 photo</div>
+                </div>
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: C.text, textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {name.length > 10 ? name.slice(0, 10) + "." : name}
+              </div>
+              <div style={{ fontSize: 9, color: `${C.accent}90`, marginTop: 3, letterSpacing: "1px", textTransform: "uppercase" }}>Vertuoza SDR</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 5 }}>
+                <span style={{ fontSize: 10, color: C.accent }}>🎙️</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.text }}>{totalCalls}</span>
+                <span style={{ fontSize: 9, color: `${C.accent}80` }}>calls</span>
+                {trend !== 0 && (
+                  <span style={{ fontSize: 10, color: trend > 0 ? "#10B981" : "#EF4444", marginLeft: 4, fontWeight: 700 }}>
+                    {trend > 0 ? `↗+${trend}%` : `↘${trend}%`}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Séparateur */}
+          <div style={{ height: 1, background: `${C.border}25`, margin: "0 16px 12px" }}/>
+
+          {/* Stats par section */}
+          <div style={{ padding: "0 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px" }}>
+            {statMap.map(s => {
+              const val = getStat(s.sectionIdx);
+              return (
+                <div key={s.key} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 11 }}>{s.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                      <span style={{ fontSize: 9, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>{s.key}</span>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: C.text }}>{val}%</span>
+                    </div>
+                    <div style={{ height: 3, background: `${C.border}25`, borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${val}%`, background: C.accent, borderRadius: 2 }}/>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Séparateur */}
+          <div style={{ height: 1, background: `${C.border}25`, margin: "12px 16px 10px" }}/>
+
+          {/* Footer stats */}
+          <div style={{ padding: "0 16px", display: "flex", justifyContent: "space-between" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{weekCalls}</div>
+              <div style={{ fontSize: 8, color: `${C.accent}80`, textTransform: "uppercase", letterSpacing: "0.5px" }}>Cette sem.</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{bestCall}%</div>
+              <div style={{ fontSize: 8, color: `${C.accent}80`, textTransform: "uppercase", letterSpacing: "0.5px" }}>Meilleur</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{totalCalls}</div>
+              <div style={{ fontSize: 8, color: `${C.accent}80`, textTransform: "uppercase", letterSpacing: "0.5px" }}>Total</div>
+            </div>
+          </div>
+
+          {/* Hint clic */}
+          {!editing && (
+            <div style={{ textAlign: "center", marginTop: 10, fontSize: 8, color: `${C.accent}50`, letterSpacing: "1px", textTransform: "uppercase" }}>
+              Cliquer pour les détails
             </div>
           )}
         </div>
 
-        {/* Name */}
-        <div style={{ textAlign: "center", marginBottom: 14, position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.text, textTransform: "uppercase", letterSpacing: "1px", lineHeight: 1.2 }}>
-            {name.length > 12 ? name.slice(0, 12) + "." : name}
-          </div>
-          <div style={{ fontSize: 9, color: C.accent, marginTop: 3, letterSpacing: "1.5px", textTransform: "uppercase" }}>Vertuoza SDR</div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: `${C.border}40`, marginBottom: 12 }}/>
-
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", position: "relative", zIndex: 1 }}>
-          {statMap.map(s => (
-            <div key={s.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>{s.key}</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{getStat(s.sectionIdx)}</span>
+        {/* Bouton photo */}
+        {editing ? (
+          <div style={{ width: 230, background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 12, padding: 12 }}>
+            <div style={{ fontSize: 10, color: V.s5, marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>URL de ta photo</div>
+            <input type="text" placeholder="https://... (LinkedIn, Slack...)" value={inputVal}
+              onChange={e => setInputVal(e.target.value)} onKeyDown={e => e.key === "Enter" && savePhoto()} autoFocus
+              style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: V.white, fontSize: 12, padding: "8px 10px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}/>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={savePhoto} style={{ flex: 1, background: V.blue, border: "none", borderRadius: 8, color: V.white, fontSize: 12, fontWeight: 700, padding: "7px", cursor: "pointer", fontFamily: "inherit" }}>Appliquer</button>
+              <button onClick={() => setEditing(false)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: V.s5, fontSize: 12, padding: "7px 12px", cursor: "pointer", fontFamily: "inherit" }}>Annuler</button>
             </div>
-          ))}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700 }}>CAL</span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{Math.min(99, totalCalls * 3 + 40)}</span>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700 }}>SEM</span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{weekCalls}</span>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: `${C.border}40`, margin: "12px 0 10px" }}/>
-
-        {/* Footer */}
-        <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 9, color: `${C.accent}80`, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>VERTUOZA · CALL REVIEW</div>
-          <div style={{ fontSize: 9, color: `${C.accent}50`, marginTop: 2 }}>{totalCalls} call{totalCalls !== 1 ? "s" : ""} analysé{totalCalls !== 1 ? "s" : ""}</div>
-        </div>
-
-        <div style={{ position: "absolute", bottom: -10, right: -10, width: 60, height: 60, borderRadius: "50%", background: `${C.accent}08`, pointerEvents: "none" }}/>
+        ) : (
+          <button onClick={() => { setInputVal(photoUrl); setEditing(true); }} style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 11, padding: "6px 16px", cursor: "pointer", fontFamily: "inherit" }}>
+            📷 {photoUrl ? "Changer la photo" : "Ajouter ta photo"}
+          </button>
+        )}
       </div>
 
-      {/* Photo URL input */}
-      {editing ? (
-        <div style={{ width: 220, background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 12, padding: 12 }}>
-          <div style={{ fontSize: 10, color: V.s5, marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>URL de ta photo</div>
-          <input
-            type="text"
-            placeholder="https://... (LinkedIn, Slack...)"
-            value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && savePhoto()}
-            autoFocus
-            style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: V.white, fontSize: 12, padding: "8px 10px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}
-          />
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={savePhoto} style={{ flex: 1, background: V.blue, border: "none", borderRadius: 8, color: V.white, fontSize: 12, fontWeight: 700, padding: "7px", cursor: "pointer", fontFamily: "inherit" }}>Appliquer</button>
-            <button onClick={() => setEditing(false)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: V.s5, fontSize: 12, padding: "7px 12px", cursor: "pointer", fontFamily: "inherit" }}>Annuler</button>
+      {/* ── Modal détails ── */}
+      {showModal && (
+        <div onClick={() => setShowModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: V.s1, border: `1px solid ${V.border}`, borderRadius: 20, padding: 28, width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", fontFamily: "'Gantari',sans-serif" }}>
+            {/* Header modal */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+              <div style={{ width: 52, height: 52, borderRadius: 12, border: `2px solid ${C.border}`, overflow: "hidden", background: `${C.accent}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {photoUrl && !imgError ? <img src={photoUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }}/> : <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{name.slice(0, 2).toUpperCase()}</span>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: V.white, textTransform: "uppercase" }}>{name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
+                  <span style={{ fontSize: 18 }}>{medal.icon}</span>
+                  <span style={{ fontSize: 13, color: C.accent, fontWeight: 700 }}>{medal.label}</span>
+                  <Stars count={medal.stars} color={C.accent}/>
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 30, fontWeight: 800, color: C.text }}>{avg || 0}%</div>
+                <div style={{ fontSize: 10, color: V.s5 }}>moyenne</div>
+              </div>
+              <button onClick={() => setShowModal(false)} style={{ background: "rgba(255,255,255,0.07)", border: "none", borderRadius: 8, color: V.s5, padding: "6px 10px", cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>✕</button>
+            </div>
+
+            {/* KPIs */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
+              {[
+                { label: "Total calls", value: totalCalls, icon: "🎙️" },
+                { label: "Cette semaine", value: weekCalls, icon: "📅" },
+                { label: "Meilleur call", value: bestCall + "%", icon: "⭐" },
+                { label: "Tendance", value: trend > 0 ? `+${trend}%` : trend === 0 ? "=" : `${trend}%`, icon: trend > 0 ? "↗" : trend < 0 ? "↘" : "→" },
+              ].map(k => (
+                <div key={k.label} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${V.border}`, borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>{k.icon}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>{k.value}</div>
+                  <div style={{ fontSize: 9, color: V.s5, textTransform: "uppercase", letterSpacing: "0.5px", marginTop: 2 }}>{k.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Stats par section */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12 }}>Performance par section</div>
+              {statMap.map(s => {
+                const val = getStat(s.sectionIdx);
+                const m = getMedal(val);
+                return (
+                  <div key={s.key} style={{ marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, color: V.white }}>{s.icon} {s.label}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Stars count={m.stars} color={m.color}/>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: m.color }}>{val}%</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 6, background: "rgba(255,255,255,0.07)", borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${val}%`, background: CRITERIA[s.sectionIdx].color, borderRadius: 4, transition: "width .6s ease" }}/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Derniers calls */}
+            {reviews.length > 0 && (
+              <div>
+                <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>Derniers calls</div>
+                {reviews.slice(0, 5).map((r, i) => {
+                  const m = getMedal(r.globalPct || 0);
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 14 }}>{m.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: V.white }}>{r.prospectName || "Prospect"}</div>
+                        <div style={{ fontSize: 10, color: V.s5 }}>{r.callDate || "—"}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: m.color }}>{r.globalPct || 0}%</div>
+                        <Stars count={m.stars} color={m.color}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      ) : (
-        <button onClick={() => { setInputVal(photoUrl); setEditing(true); }} style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 11, padding: "6px 16px", cursor: "pointer", fontFamily: "inherit" }}>
-          📷 {photoUrl ? "Changer la photo" : "Ajouter ta photo"}
-        </button>
       )}
-    </div>
+    </>
   );
 }
 
