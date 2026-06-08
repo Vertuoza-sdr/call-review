@@ -279,7 +279,127 @@ async function callAPI(system, content, maxT = 4000) {
   return JSON.parse(txt.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/```\s*$/i,"").trim());
 }
 
-// ── APP ────────────────────────────────────────────────────────────────────────
+// ── FIFA Card ─────────────────────────────────────────────────────────────────
+function FifaCard({ name, avg, medal, reviews }) {
+  const cardColors = {
+    "Gold":     { bg: "#1a1200", border: "#FFD700", accent: "#FFD700", shine: "#FFD70030", text: "#FFE566" },
+    "Silver":   { bg: "#111820", border: "#C0C0C0", accent: "#C0C0C0", shine: "#C0C0C020", text: "#D8D8D8" },
+    "Bronze":   { bg: "#1a0d00", border: "#CD7F32", accent: "#CD7F32", shine: "#CD7F3220", text: "#E8A060" },
+    "Rookie":   { bg: "#0a0e1a", border: V.blue,    accent: V.neon,    shine: "#003FDA20", text: V.neon   },
+    "Débutant": { bg: "#0a0a14", border: V.s4,      accent: V.s5,      shine: "#52588220", text: V.s5     },
+  };
+  const C = cardColors[medal.label] || cardColors["Débutant"];
+
+  const statMap = [
+    { key: "OUV", label: "Ouverture",  sectionIdx: 0 },
+    { key: "DIS", label: "Discovery",  sectionIdx: 1 },
+    { key: "PIT", label: "Pitch",      sectionIdx: 2 },
+    { key: "CLO", label: "Closing",    sectionIdx: 3 },
+  ];
+
+  const getStat = (sIdx) => {
+    if (!reviews.length) return 0;
+    const section = CRITERIA[sIdx];
+    const avg = Math.round(reviews.reduce((a, r) => a + sectionPct(section, r.scores || {}), 0) / reviews.length);
+    // Convert 0-100 to FIFA-style 40-99
+    return Math.max(40, Math.min(99, Math.round(40 + (avg / 100) * 59)));
+  };
+
+  const totalCalls = reviews.length;
+  const weekCalls = reviews.filter(r => {
+    if (!r.createdAt) return false;
+    const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
+    return (new Date() - d) < 7 * 86400000;
+  }).length;
+
+  // Overall FIFA-style rating: 40-99
+  const overallRating = avg ? Math.max(40, Math.min(99, Math.round(40 + (avg / 100) * 59))) : 40;
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
+      <div style={{
+        width: 220, position: "relative",
+        background: C.bg,
+        border: `2px solid ${C.border}`,
+        borderRadius: 16,
+        padding: "20px 18px 18px",
+        boxShadow: `0 0 30px ${C.shine}, inset 0 0 60px ${C.shine}`,
+        fontFamily: "'Gantari',sans-serif",
+        overflow: "hidden",
+      }}>
+        {/* Shine overlay top */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: `${C.shine}`, borderRadius: "14px 14px 50% 50%", pointerEvents: "none" }}/>
+
+        {/* Top row: rating + position + medal */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, position: "relative", zIndex: 1 }}>
+          <div>
+            <div style={{ fontSize: 40, fontWeight: 800, color: C.text, lineHeight: 1, letterSpacing: "-2px" }}>{overallRating}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.accent, letterSpacing: "2px", textTransform: "uppercase" }}>SDR</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 22 }}>{medal.icon}</div>
+            <div style={{ fontSize: 9, color: C.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }}>{medal.label}</div>
+            <Stars count={medal.stars} color={C.accent}/>
+          </div>
+        </div>
+
+        {/* Avatar placeholder — initials */}
+        <div style={{
+          width: 80, height: 80, borderRadius: "50%", margin: "0 auto 12px",
+          background: `${C.accent}20`, border: `2px solid ${C.accent}60`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 32, fontWeight: 800, color: C.text,
+          position: "relative", zIndex: 1,
+        }}>
+          {name.slice(0, 2).toUpperCase()}
+        </div>
+
+        {/* Name */}
+        <div style={{ textAlign: "center", marginBottom: 14, position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: C.text, textTransform: "uppercase", letterSpacing: "1px", lineHeight: 1.2 }}>
+            {name.length > 12 ? name.slice(0, 12) + "." : name}
+          </div>
+          <div style={{ fontSize: 9, color: C.accent, marginTop: 3, letterSpacing: "1.5px", textTransform: "uppercase" }}>Vertuoza SDR</div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: `${C.border}40`, marginBottom: 12 }}/>
+
+        {/* Stats FIFA */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", position: "relative", zIndex: 1 }}>
+          {statMap.map(s => (
+            <div key={s.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>{s.key}</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{getStat(s.sectionIdx)}</span>
+            </div>
+          ))}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>CAL</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{Math.min(99, totalCalls * 3 + 40)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>SEM</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{weekCalls}</span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: `${C.border}40`, margin: "12px 0 10px" }}/>
+
+        {/* Footer Vertuoza */}
+        <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: 9, color: `${C.accent}80`, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>VERTUOZA · CALL REVIEW</div>
+          <div style={{ fontSize: 9, color: `${C.accent}50`, marginTop: 2 }}>{totalCalls} call{totalCalls !== 1 ? "s" : ""} analysé{totalCalls !== 1 ? "s" : ""}</div>
+        </div>
+
+        {/* Corner decoration */}
+        <div style={{ position: "absolute", bottom: -10, right: -10, width: 60, height: 60, borderRadius: "50%", background: `${C.accent}08`, pointerEvents: "none" }}/>
+      </div>
+    </div>
+  );
+}
+
+// ── App principale ────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -544,29 +664,15 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            {/* Mon profil */}
+            {/* Carte FIFA */}
             <div style={card()}>
-              <span style={sLabel}>Mon profil</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-                <div style={{ textAlign: "center" }}>
-                  <GaugeArc pct={myAvg} color={myMedal.color} size={100}/>
-                  <div style={{ fontSize: 20, marginTop: 4 }}>{myMedal.icon}</div>
-                  <div style={{ fontSize: 11, color: myMedal.color, fontWeight: 700 }}>{myMedal.label}</div>
-                  <Stars count={myMedal.stars} color={myMedal.color}/>
-                </div>
-                <div style={{ flex: 1 }}>
-                  {CRITERIA.map(s => {
-                    const avg = reviews.length ? Math.round(reviews.reduce((a, r) => a + sectionPct(s, r.scores || {}), 0) / reviews.length) : 0;
-                    return <SectionBar key={s.section} label={s.section} pct={avg} color={s.color} icon={s.icon}/>;
-                  })}
-                </div>
-              </div>
-              {sparklineValues.length >= 2 && (
-                <div>
-                  <div style={{ fontSize: 10, color: V.s5, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>Évolution</div>
-                  <Sparkline values={sparklineValues} color={V.neon}/>
-                </div>
-              )}
+              <span style={sLabel}>Ma carte SDR</span>
+              <FifaCard
+                name={user.email.split("@")[0]}
+                avg={myAvg}
+                medal={myMedal}
+                reviews={reviews}
+              />
             </div>
 
             {/* Leaderboard */}
