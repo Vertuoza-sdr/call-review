@@ -1046,15 +1046,14 @@ export default function App() {
     if (!window.confirm("Supprimer tous les objectifs ?")) return;
     try {
       let snap;
-      if (targetUserId) {
-        // Admin supprime les objectifs d'un SDR spécifique
+      if (targetUserId && typeof targetUserId === "string") {
         snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", targetUserId)));
       } else if (isAdmin) {
-        // Admin supprime tous les objectifs visibles (tous les users)
         snap = await getDocs(collection(db, "objectives"));
       } else {
-        // SDR supprime ses propres objectifs
-        snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", user?.uid)));
+        const uid = user?.uid;
+        if (!uid) return;
+        snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", uid)));
       }
       console.log("Objectifs à supprimer:", snap.docs.length);
       for (const d of snap.docs) await deleteDoc(doc(db, "objectives", d.id));
@@ -1730,7 +1729,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                 <div style={{ fontSize: 18, fontWeight: 800 }}>🎯 Mes Objectifs Coach</div>
                 {objectives.length > 0 && (
-                  <button onClick={clearAllObjectives} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Tout effacer</button>
+                  <button onClick={() => clearAllObjectives()} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Tout effacer</button>
                 )}
               </div>
               <div style={{ fontSize: 12, color: V.s5 }}>Générés automatiquement après chaque analyse · Validés au call suivant</div>
