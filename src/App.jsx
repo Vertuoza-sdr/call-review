@@ -1044,11 +1044,11 @@ export default function App() {
 
   const clearAllObjectives = async (targetUserId = null) => {
     if (!window.confirm("Supprimer tous les objectifs ?")) return;
-    const pool = isAdmin ? allObjectives : objectives;
+    // Prend tous les objectifs visibles — les siens ou ceux d'un SDR ciblé
     const toDelete = targetUserId
-      ? pool.filter(o => o.userId === targetUserId)
-      : objectives.filter(o => o.userId === user?.uid);
-    if (toDelete.length === 0) { alert("Aucun objectif à supprimer."); return; }
+      ? [...objectives, ...allObjectives].filter(o => o.userId === targetUserId)
+      : objectives;
+    if (toDelete.length === 0) { alert("Aucun objectif trouvé."); return; }
     for (const o of toDelete) {
       try { await deleteDoc(doc(db, "objectives", o.id)); } catch (e) { console.error(e); }
     }
