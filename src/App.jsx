@@ -1045,14 +1045,20 @@ export default function App() {
   const clearAllObjectives = async (targetUserId = null) => {
     if (!window.confirm("Supprimer tous les objectifs ?")) return;
     try {
-      const uid = targetUserId || user?.uid;
-      const q = query(collection(db, "objectives"), where("userId", "==", uid));
-      const snap = await getDocs(q);
-      console.log("Objectifs trouvés:", snap.docs.length);
-      for (const d of snap.docs) {
-        await deleteDoc(doc(db, "objectives", d.id));
+      let snap;
+      if (targetUserId) {
+        // Admin supprime les objectifs d'un SDR spécifique
+        snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", targetUserId)));
+      } else if (isAdmin) {
+        // Admin supprime tous les objectifs visibles (tous les users)
+        snap = await getDocs(collection(db, "objectives"));
+      } else {
+        // SDR supprime ses propres objectifs
+        snap = await getDocs(query(collection(db, "objectives"), where("userId", "==", user?.uid)));
       }
-    } catch (e) { console.error("Erreur suppression:", e); }
+      console.log("Objectifs à supprimer:", snap.docs.length);
+      for (const d of snap.docs) await deleteDoc(doc(db, "objectives", d.id));
+    } catch (e) { console.error("Erreur suppression:", e); alert("Erreur : " + e.message); }
   };
 
   const handleAnalyze = async () => {
