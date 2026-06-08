@@ -294,7 +294,7 @@ const callAPI = async (system, content, maxT = 4000) => {
         "anthropic-version": "2023-06-01",
         "anthropic-dangerous-direct-browser-access": "true"
       },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: maxT, system, messages: [{ role: "user", content }] })
+      body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: maxT, system, messages: [{ role: "user", content }] })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
