@@ -1158,47 +1158,130 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
   );
 
   if (!user) return (
-    <div style={{ minHeight: "100vh", background: V.darkBlue, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Gantari',sans-serif", padding: 16 }}>
+    <div style={{ minHeight: "100vh", background: V.darkBlue, fontFamily: "'Gantari',sans-serif", display: "flex", overflow: "hidden", position: "relative" }}>
       <link href="https://fonts.googleapis.com/css2?family=Gantari:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-      <style>{gStyles}</style>
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: V.blue, border: `2px solid ${V.neon}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: V.neon, margin: "0 auto 16px" }}>V</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: V.white, letterSpacing: "-0.5px" }}>Vertuoza <span style={{ color: V.neon }}>Call Review</span></div>
-          <div style={{ fontSize: 13, color: V.s5, marginTop: 4 }}>SDR Performance Platform</div>
+      <style>{`
+        ${gStyles}
+        @keyframes floatUp { from { transform: translateY(100vh); opacity: 0; } to { transform: translateY(-20px); opacity: 0.6; } }
+        @keyframes scanline { 0% { top: -10%; } 100% { top: 110%; } }
+        @keyframes glitch { 0%,100% { clip-path: inset(0 0 98% 0); } 20% { clip-path: inset(33% 0 56% 0); } 40% { clip-path: inset(70% 0 10% 0); } 60% { clip-path: inset(15% 0 75% 0); } 80% { clip-path: inset(55% 0 35% 0); } }
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes borderGlow { 0%,100% { border-color: ${V.neon}40; box-shadow: 0 0 20px ${V.neon}10; } 50% { border-color: ${V.neon}80; box-shadow: 0 0 40px ${V.neon}30; } }
+      `}</style>
+
+      {/* ── FOND GAUCHE — Univers immersif ── */}
+      <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 64px", overflow: "hidden" }}>
+
+        {/* Grille tech en fond */}
+        <svg style={{ position: "absolute", inset: 0, opacity: 0.04 }} width="100%" height="100%">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke={V.neon} strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+
+        {/* Scanline animée */}
+        <div style={{ position: "absolute", left: 0, right: 0, height: "2px", background: `linear-gradient(90deg, transparent, ${V.neon}40, transparent)`, animation: "scanline 4s linear infinite", zIndex: 1, pointerEvents: "none" }}/>
+
+        {/* Particules flottantes */}
+        {[...Array(8)].map((_, i) => (
+          <div key={i} style={{ position: "absolute", left: `${10 + i * 12}%`, bottom: "-20px", width: `${4 + i % 3 * 3}px`, height: `${4 + i % 3 * 3}px`, borderRadius: "50%", background: i % 2 === 0 ? V.neon : V.orange, animation: `floatUp ${6 + i * 1.5}s ease-in infinite`, animationDelay: `${i * 0.8}s`, opacity: 0.5 }}/>
+        ))}
+
+        {/* Cercles décoratifs */}
+        <div style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, borderRadius: "50%", border: `1px solid ${V.neon}15`, pointerEvents: "none" }}/>
+        <div style={{ position: "absolute", top: -50, right: -50, width: 250, height: 250, borderRadius: "50%", border: `1px solid ${V.neon}10`, pointerEvents: "none" }}/>
+        <div style={{ position: "absolute", bottom: -120, left: -80, width: 350, height: 350, borderRadius: "50%", border: `1px solid ${V.blue}20`, pointerEvents: "none" }}/>
+
+        {/* Logo + titre */}
+        <div style={{ position: "relative", zIndex: 2, animation: "fadeInUp .8s ease both" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 40 }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: V.blue, border: `2px solid ${V.neon}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 900, color: V.neon, boxShadow: `0 0 24px ${V.neon}30` }}>V</div>
+            <div>
+              <div style={{ fontSize: 13, color: V.neon, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", marginBottom: 2 }}>Vertuoza</div>
+              <div style={{ fontSize: 11, color: V.s4, letterSpacing: "2px", textTransform: "uppercase" }}>SDR Performance Platform</div>
+            </div>
+          </div>
+
+          {/* Headline principale */}
+          <div style={{ fontSize: 48, fontWeight: 900, color: V.white, lineHeight: 1.1, letterSpacing: "-2px", marginBottom: 20 }}>
+            Analyse.<br/>
+            <span style={{ color: V.neon }}>Progresse.</span><br/>
+            <span style={{ color: V.orange }}>Domine.</span>
+          </div>
+
+          <div style={{ fontSize: 16, color: V.s5, lineHeight: 1.7, maxWidth: 400, marginBottom: 48 }}>
+            L'environnement d'entraînement des meilleurs SDR Vertuoza. Chaque call analysé, chaque objectif validé, chaque rang atteint.
+          </div>
+
+          {/* Stats live */}
+          <div style={{ display: "flex", gap: 32, marginBottom: 48 }}>
+            {[
+              { value: "20", label: "Critères analysés", color: V.neon },
+              { value: "4", label: "IAs en parallèle", color: V.orange },
+              { value: "3×", label: "Progression/semaine", color: "#10B981" },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ fontSize: 32, fontWeight: 900, color: s.color, lineHeight: 1, letterSpacing: "-1px" }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: V.s4, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.8px" }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Features pills */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {["🎯 Coach IA personnalisé", "🛡️ Badges & progression", "🃏 Carte SDR collector", "📊 Dashboard temps réel", "🏆 Leaderboard équipe", "🎬 Cinématique analyse"].map(f => (
+              <div key={f} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 20, padding: "5px 12px", fontSize: 12, color: V.s5 }}>{f}</div>
+            ))}
+          </div>
         </div>
-        <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 20, padding: 32 }}>
-          <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: 4 }}>
+
+        {/* Ticker en bas */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 36, background: `${V.s1}CC`, borderTop: `1px solid ${V.border}`, overflow: "hidden", display: "flex", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 0, animation: "ticker 20s linear infinite", whiteSpace: "nowrap" }}>
+            {[...Array(2)].map((_, j) => (
+              <span key={j} style={{ display: "inline-flex", gap: 40, paddingRight: 40 }}>
+                {["🎙️ Call analysé : +74% · Objectif CLOSING validé", "🏆 Nouveau rang GOLD débloqué", "⚡ 3 calls analysés aujourd'hui", "🛡️ Écusson VÉTÉRAN débloqué", "📈 Score moyen équipe : 78%", "🔥 Streak de 5 calls en progression"].map((t, i) => (
+                  <span key={i} style={{ fontSize: 11, color: V.s5 }}>
+                    <span style={{ color: V.neon, marginRight: 8 }}>◆</span>{t}
+                  </span>
+                ))}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── DROITE — Formulaire ── */}
+      <div style={{ width: 440, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 48px", background: "rgba(0,0,0,0.3)", borderLeft: `1px solid ${V.border}`, position: "relative", zIndex: 2 }}>
+        <div style={{ width: "100%", animation: "fadeInUp .8s ease .2s both" }}>
+
+          {/* Header form */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: V.white, marginBottom: 6 }}>
+              {authMode === "login" ? "Accès à ton espace" : "Rejoindre l'équipe"}
+            </div>
+            <div style={{ fontSize: 13, color: V.s5 }}>
+              {authMode === "login" ? "Entre dans l'arène. Tes stats t'attendent." : "Crée ton compte et commence à progresser."}
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 28, background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: 4 }}>
             {[["login","Connexion"],["signup","Créer un compte"]].map(([m,l]) => (
               <button key={m} onClick={() => setAuthMode(m)} style={{ flex: 1, padding: "9px", background: authMode === m ? V.blue : "transparent", border: "none", borderRadius: 8, color: authMode === m ? V.white : V.s5, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{l}</button>
             ))}
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <span style={sLabel}>Email</span>
-            <input type="email" placeholder="julie@vertuoza.com" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle}/>
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <span style={sLabel}>Mot de passe</span>
-            <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAuth()} style={inputStyle}/>
-          </div>
-          {authError && <div style={{ background: "#EF444415", border: "1px solid #EF444440", borderRadius: 10, padding: "10px 14px", color: "#EF4444", fontSize: 12, marginBottom: 16 }}>{authError}</div>}
-          <button onClick={handleAuth} disabled={authBusy} style={{ width: "100%", background: V.blue, border: "none", borderRadius: 12, color: V.white, fontSize: 14, fontWeight: 700, padding: "13px", cursor: authBusy ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: authBusy ? 0.7 : 1 }}>
-            {authBusy ? "⏳" : authMode === "login" ? "Se connecter →" : "Créer mon compte →"}
-          </button>
 
-          {/* Séparateur */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.1)" }}/>
-            <span style={{ fontSize: 11, color: V.s4 }}>ou</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.1)" }}/>
-          </div>
-
-          {/* Bouton Google */}
-          <button onClick={handleGoogleAuth} disabled={authBusy} style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, color: V.white, fontSize: 14, fontWeight: 600, padding: "13px", cursor: authBusy ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, transition: "background .2s" }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+          {/* Google first */}
+          <button onClick={handleGoogleAuth} disabled={authBusy}
+            style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, color: V.white, fontSize: 14, fontWeight: 600, padding: "13px", cursor: authBusy ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 20, transition: "all .2s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
           >
-            {/* Logo Google SVG */}
             <svg width={18} height={18} viewBox="0 0 18 18">
               <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
               <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
@@ -1207,6 +1290,40 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
             </svg>
             Continuer avec Google
           </button>
+
+          {/* Séparateur */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }}/>
+            <span style={{ fontSize: 11, color: V.s4 }}>ou avec ton email</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }}/>
+          </div>
+
+          {/* Champs */}
+          <div style={{ marginBottom: 12 }}>
+            <span style={sLabel}>Email</span>
+            <input type="email" placeholder="julie@vertuoza.com" value={email} onChange={e => setEmail(e.target.value)} style={{ ...inputStyle, animation: "borderGlow 3s ease-in-out infinite" }}/>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <span style={sLabel}>Mot de passe</span>
+            <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAuth()} style={inputStyle}/>
+          </div>
+
+          {authError && <div style={{ background: "#EF444415", border: "1px solid #EF444440", borderRadius: 10, padding: "10px 14px", color: "#EF4444", fontSize: 12, marginBottom: 16 }}>{authError}</div>}
+
+          <button onClick={handleAuth} disabled={authBusy} style={{ width: "100%", background: authBusy ? "rgba(255,255,255,0.1)" : V.blue, border: "none", borderRadius: 12, color: V.white, fontSize: 14, fontWeight: 700, padding: "14px", cursor: authBusy ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .2s", boxShadow: authBusy ? "none" : `0 4px 20px ${V.blue}60` }}
+            onMouseEnter={e => { if (!authBusy) { e.currentTarget.style.background = V.s3; e.currentTarget.style.transform = "translateY(-1px)"; }}}
+            onMouseLeave={e => { e.currentTarget.style.background = V.blue; e.currentTarget.style.transform = "none"; }}
+          >
+            {authBusy ? "⏳ Connexion…" : authMode === "login" ? "Entrer dans l'arène →" : "Rejoindre l'équipe →"}
+          </button>
+
+          {/* Footer */}
+          <div style={{ marginTop: 28, padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: `1px solid rgba(255,255,255,0.06)` }}>
+            <div style={{ fontSize: 11, color: V.s4, textAlign: "center", lineHeight: 1.6 }}>
+              🔒 Accès réservé à l'équipe SDR Vertuoza<br/>
+              <span style={{ color: V.s5 }}>Chaque session est une opportunité de progresser.</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
