@@ -88,6 +88,22 @@ const sectionPct = (section, scores) => {
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const DAILY_GOAL = 3;
 
+// ── Badges écussons ───────────────────────────────────────────────────────────
+const BADGES = [
+  { id: "first_call",    icon: "🛡️",  name: "Premier Call",       desc: "Premier call analysé",                 condition: (r,o) => r.length >= 1 },
+  { id: "trio",          icon: "⚔️",  name: "Trio du Jour",       desc: "3 calls analysés en une journée",      condition: (r,o) => { const days={}; r.forEach(rv=>{if(!rv.createdAt)return;const d=rv.createdAt.toDate?rv.createdAt.toDate():new Date(rv.createdAt);const k=d.toISOString().slice(0,10);days[k]=(days[k]||0)+1;}); return Object.values(days).some(v=>v>=3); } },
+  { id: "ten_calls",     icon: "🏰",  name: "Vétéran",            desc: "10 calls analysés",                    condition: (r,o) => r.length >= 10 },
+  { id: "bronze_badge",  icon: "🥉",  name: "Rang Bronze",        desc: "Score moyen ≥ 55%",                    condition: (r,o) => r.length && Math.round(r.reduce((a,rv)=>a+(rv.globalPct||0),0)/r.length) >= 55 },
+  { id: "silver_badge",  icon: "🥈",  name: "Rang Argent",        desc: "Score moyen ≥ 70%",                    condition: (r,o) => r.length && Math.round(r.reduce((a,rv)=>a+(rv.globalPct||0),0)/r.length) >= 70 },
+  { id: "gold_badge",    icon: "🏆",  name: "Rang Or",            desc: "Score moyen ≥ 85%",                    condition: (r,o) => r.length && Math.round(r.reduce((a,rv)=>a+(rv.globalPct||0),0)/r.length) >= 85 },
+  { id: "perfect_close", icon: "🎯",  name: "Closer Parfait",     desc: "Score Closing ≥ 90% sur un call",      condition: (r,o) => r.some(rv=>sectionPct(CRITERIA[3],rv.scores||{})>=90) },
+  { id: "obj_validated", icon: "✅",  name: "Objectif Atteint",   desc: "Premier objectif coach validé",        condition: (r,o) => o.some(ob=>ob.status==="validated") },
+  { id: "streak_3",      icon: "🔥",  name: "En Feu",             desc: "3 calls consécutifs en amélioration",  condition: (r,o) => { if(r.length<3)return false; const last3=r.slice(0,3).map(rv=>rv.globalPct||0); return last3[0]>last3[1]&&last3[1]>last3[2]; } },
+  { id: "discovery_ace", icon: "🔍",  name: "Détective BTP",      desc: "Score Discovery ≥ 85% sur un call",    condition: (r,o) => r.some(rv=>sectionPct(CRITERIA[1],rv.scores||{})>=85) },
+  { id: "week_warrior",  icon: "⚡",  name: "Guerrier de la Sem.", desc: "5 calls en une semaine",               condition: (r,o) => { const now=new Date(); return r.filter(rv=>{if(!rv.createdAt)return false;const d=rv.createdAt.toDate?rv.createdAt.toDate():new Date(rv.createdAt);return(now-d)<7*86400000;}).length>=5; } },
+  { id: "elite",         icon: "👑",  name: "Élite SDR",          desc: "Score ≥ 90% sur un call",              condition: (r,o) => r.some(rv=>(rv.globalPct||0)>=90) },
+];
+
 // ── Stars display ─────────────────────────────────────────────────────────────
 function Stars({ count, color }) {
   return (
@@ -656,6 +672,7 @@ export default function App() {
   const [authError, setAuthError] = useState(""); const [authBusy, setAuthBusy] = useState(false);
   const [page, setPage] = useState("dashboard");
   const [reviews, setReviews] = useState([]); const [allReviews, setAllReviews] = useState([]);
+  const [objectives, setObjectives] = useState([]);
   const [selectedReview, setSelectedReview] = useState(null);
   const [saveStatus, setSaveStatus] = useState(""); const [reviewTab, setReviewTab] = useState("review");
   const [transcript, setTranscript] = useState("");
@@ -680,6 +697,12 @@ export default function App() {
     if (!user) return;
     const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
     return onSnapshot(q, snap => setAllReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "objectives"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+    return onSnapshot(q, snap => setObjectives(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
   }, [user]);
 
   const handleAuth = async () => {
@@ -712,6 +735,30 @@ export default function App() {
     } catch (e) { console.error("Autosave error", e); }
   };
 
+  const saveObjectives = async (objs, scores, reviewId) => {
+    if (!user || !objs?.length) return;
+    // Marquer les anciens objectifs en cours comme "evaluated"
+    const pending = objectives.filter(o => o.status === "pending");
+    for (const o of pending) {
+      const criterionScore = scores[o.criterionId] || 0;
+      const validated = criterionScore >= 3;
+      try {
+        await import("firebase/firestore").then(({ updateDoc, doc: fDoc }) =>
+          updateDoc(fDoc(db, "objectives", o.id), { status: validated ? "validated" : "failed", evaluatedAt: new Date(), evaluatedScore: criterionScore })
+        );
+      } catch {}
+    }
+    // Sauvegarder les nouveaux objectifs
+    for (const obj of objs) {
+      try {
+        await addDoc(collection(db, "objectives"), {
+          userId: user.uid, ...obj,
+          status: "pending", createdAt: new Date(),
+        });
+      } catch {}
+    }
+  };
+
   const deleteReview = async (id) => {
     const r = reviews.find(r => r.id === id);
     if (!r || r.userId !== user?.uid) return;
@@ -738,11 +785,26 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 Retourne UNIQUEMENT du JSON valide sans markdown :
 {"tone":{"tip":"ce qu'il faut changer","scripts":["phrase type 1","phrase type 2"]},"rapport":{"tip":"...","scripts":["...","..."]},"rhythm":{"tip":"...","scripts":["...","..."]},"opening":{"tip":"...","scripts":["...","...","..."]},"flow":{"tip":"...","scripts":["...","..."]},"talkratio":{"tip":"...","scripts":["...","..."]},"structure":{"tip":"...","scripts":["...","...","..."]},"tools":{"tip":"...","scripts":["...","...","..."]},"decision":{"tip":"...","scripts":["...","..."]},"timing":{"tip":"...","scripts":["...","...","..."]},"quantify":{"tip":"...","scripts":["...","...","..."]},"objections":{"tip":"...","scripts":["...","...","..."]},"sector":{"tip":"...","scripts":["...","..."]},"trade":{"tip":"...","scripts":["...","..."]},"vocab":{"tip":"...","scripts":["...","..."]},"cases":{"tip":"...","scripts":["...","...","..."]},"benefits":{"tip":"...","scripts":["...","...","..."]},"control":{"tip":"...","scripts":["...","..."]},"commitment":{"tip":"...","scripts":["...","...","..."]},"energy":{"tip":"...","scripts":["...","..."]}}`;
 
+    const p4 = `Tu es un coach SDR expert Vertuoza. Après avoir analysé ce call, génère 3 objectifs précis et actionnables pour le PROCHAIN call du SDR.
+Retourne UNIQUEMENT du JSON valide sans markdown :
+[
+  {
+    "title": "Titre court de l'objectif (max 8 mots)",
+    "description": "Description précise de ce qu'il doit faire différemment au prochain call. 1-2 phrases max. Ancré dans le contexte Vertuoza BTP.",
+    "criterionId": "ID du critère concerné parmi : tone,rapport,rhythm,opening,flow,talkratio,structure,tools,decision,timing,quantify,objections,sector,trade,vocab,cases,benefits,control,commitment,energy",
+    "criterionLabel": "Nom lisible du critère",
+    "priority": "high|medium|low",
+    "example": "Exemple de phrase concrète à utiliser dans le prochain call"
+  }
+]
+Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et actionnable.`;
+
     try {
-      const [r1, r2, r3] = await Promise.all([
+      const [r1, r2, r3, r4] = await Promise.all([
         callAPI(p1, `Transcript :\n\n${transcript}`, 5000),
         callAPI(p2, `Transcript :\n\n${transcript}`, 4000),
         callAPI(p3, `Transcript :\n\n${transcript}`, 5000),
+        callAPI(p4, `Transcript :\n\n${transcript}`, 3000),
       ]);
       const pct = calcPct(r1.scores || {});
       setScores(r1.scores || {}); setJustifications(r1.justifications || {});
@@ -751,6 +813,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
       setGlobalImprovements(r1.globalImprovements || []);
       setExpertScripts(r2 || {}); setLevelUp(r3 || {});
       await autoSave(r1, r2, r3, pct);
+      await saveObjectives(Array.isArray(r4) ? r4 : [], r1.scores || {});
       setSaveStatus("saved");
     } catch (e) { setGlobalComment("❌ Erreur : " + e.message); }
     setLoading(false);
@@ -968,8 +1031,76 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             );
           })()}
 
-          {reviews.length === 0 && (
-            <div style={{ ...card(), textAlign: "center", padding: 60 }}>
+          {/* Objectifs coach */}
+          {objectives.length > 0 && (() => {
+            const pending = objectives.filter(o => o.status === "pending").slice(0, 3);
+            const validated = objectives.filter(o => o.status === "validated").length;
+            const failed = objectives.filter(o => o.status === "failed").length;
+            const priorityColor = { high: V.orange, medium: V.blue, low: V.s5 };
+            const priorityLabel = { high: "Priorité haute", medium: "Priorité moyenne", low: "Priorité basse" };
+            return (
+              <div style={card()}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                  <div>
+                    <span style={sLabel}>🎯 Objectifs Coach — Prochain call</span>
+                    <div style={{ display: "flex", gap: 12, marginTop: -4 }}>
+                      <span style={{ fontSize: 11, color: "#10B981" }}>✅ {validated} validés</span>
+                      <span style={{ fontSize: 11, color: "#EF4444" }}>❌ {failed} ratés</span>
+                      <span style={{ fontSize: 11, color: V.orange }}>⏳ {pending.length} en cours</span>
+                    </div>
+                  </div>
+                </div>
+                {pending.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Aucun objectif en cours — analyse un call pour en générer de nouveaux !</div>}
+                {pending.map((obj, i) => (
+                  <div key={obj.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${priorityColor[obj.priority] || V.border}30`, borderLeft: `3px solid ${priorityColor[obj.priority] || V.border}`, borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${priorityColor[obj.priority] || V.border}20`, border: `1.5px solid ${priorityColor[obj.priority] || V.border}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: priorityColor[obj.priority] || V.s5, flexShrink: 0 }}>{i+1}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: V.white }}>{obj.title}</span>
+                          <span style={{ fontSize: 9, color: priorityColor[obj.priority] || V.s5, background: `${priorityColor[obj.priority] || V.border}15`, padding: "2px 8px", borderRadius: 20, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>{priorityLabel[obj.priority] || obj.priority}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: V.s5, lineHeight: 1.6, marginBottom: 6 }}>{obj.description}</div>
+                        {obj.example && (
+                          <div style={{ background: `${V.neon}10`, border: `1px solid ${V.neon}20`, borderRadius: 8, padding: "6px 10px", fontSize: 11, color: V.neon, fontStyle: "italic" }}>
+                            💬 "{obj.example}"
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* Badges écussons */}
+          {reviews.length > 0 && (() => {
+            const earnedBadges = BADGES.filter(b => b.condition(reviews, objectives));
+            const lockedBadges = BADGES.filter(b => !b.condition(reviews, objectives));
+            return (
+              <div style={card()}>
+                <span style={sLabel}>🛡️ Mes écussons — {earnedBadges.length}/{BADGES.length} débloqués</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                  {earnedBadges.map(b => (
+                    <div key={b.id} title={b.desc} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 12px", background: "rgba(255,255,255,0.06)", border: `1.5px solid ${V.neon}40`, borderRadius: 12, minWidth: 70, cursor: "default" }}>
+                      <div style={{ fontSize: 28, filter: `drop-shadow(0 0 8px ${V.neon}80)` }}>{b.icon}</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: V.neon, textAlign: "center", letterSpacing: "0.3px" }}>{b.name}</div>
+                    </div>
+                  ))}
+                  {lockedBadges.map(b => (
+                    <div key={b.id} title={`🔒 ${b.desc}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 12px", background: "rgba(255,255,255,0.02)", border: `1.5px solid rgba(255,255,255,0.06)`, borderRadius: 12, minWidth: 70, cursor: "default", opacity: 0.4 }}>
+                      <div style={{ fontSize: 28, filter: "grayscale(1)" }}>{b.icon}</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: V.s4, textAlign: "center" }}>{b.name}</div>
+                    </div>
+                  ))}
+                </div>
+                {earnedBadges.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Analyse des calls pour débloquer tes premiers écussons !</div>}
+              </div>
+            );
+          })()}
+
+          {reviews.length === 0 && (            <div style={{ ...card(), textAlign: "center", padding: 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div>
               <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aucun call analysé</div>
               <div style={{ color: V.s5, fontSize: 14, marginBottom: 24 }}>Lance ta première analyse pour débloquer ton dashboard.</div>
