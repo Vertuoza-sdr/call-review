@@ -1043,14 +1043,15 @@ export default function App() {
   };
 
   const clearAllObjectives = async (targetUserId = null) => {
-    if (!window.confirm("Supprimer tous les objectifs ?")) return;
-    // Prend tous les objectifs visibles — les siens ou ceux d'un SDR ciblé
     const toDelete = targetUserId
       ? [...objectives, ...allObjectives].filter(o => o.userId === targetUserId)
       : objectives;
-    if (toDelete.length === 0) { alert("Aucun objectif trouvé."); return; }
+    console.log("clearAllObjectives called, toDelete:", toDelete.length, toDelete);
+    if (toDelete.length === 0) return;
+    if (!window.confirm(`Supprimer ${toDelete.length} objectif(s) ?`)) return;
     for (const o of toDelete) {
-      try { await deleteDoc(doc(db, "objectives", o.id)); } catch (e) { console.error(e); }
+      console.log("Deleting objective:", o.id);
+      try { await deleteDoc(doc(db, "objectives", o.id)); } catch (e) { console.error("Error deleting:", e); }
     }
   };
 
