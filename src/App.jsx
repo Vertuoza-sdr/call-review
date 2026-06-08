@@ -1043,16 +1043,16 @@ export default function App() {
   };
 
   const clearAllObjectives = async (targetUserId = null) => {
-    const toDelete = targetUserId
-      ? [...objectives, ...allObjectives].filter(o => o.userId === targetUserId)
-      : objectives;
-    console.log("clearAllObjectives called, toDelete:", toDelete.length, toDelete);
-    if (toDelete.length === 0) return;
-    if (!window.confirm(`Supprimer ${toDelete.length} objectif(s) ?`)) return;
-    for (const o of toDelete) {
-      console.log("Deleting objective:", o.id);
-      try { await deleteDoc(doc(db, "objectives", o.id)); } catch (e) { console.error("Error deleting:", e); }
-    }
+    if (!window.confirm("Supprimer tous les objectifs ?")) return;
+    try {
+      const uid = targetUserId || user?.uid;
+      const q = query(collection(db, "objectives"), where("userId", "==", uid));
+      const snap = await getDocs(q);
+      console.log("Objectifs trouvés:", snap.docs.length);
+      for (const d of snap.docs) {
+        await deleteDoc(doc(db, "objectives", d.id));
+      }
+    } catch (e) { console.error("Erreur suppression:", e); }
   };
 
   const handleAnalyze = async () => {
