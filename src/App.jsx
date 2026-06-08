@@ -1064,6 +1064,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
   const medal = getMedal(globalPct);
   const myAvg = reviews.length ? Math.round(reviews.reduce((a, r) => a + (r.globalPct || 0), 0) / reviews.length) : 0;
   const myMedal = getMedal(myAvg);
+  const pendingObjectives = objectives.filter(o => o.status === "pending");
   const todayReviews = reviews.filter(r => {
     if (!r.createdAt) return false;
     const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
@@ -1167,7 +1168,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
 
       {/* Nav */}
       <div style={{ borderBottom: `1px solid ${V.border}`, display: "flex", padding: "0 24px", background: V.s1 }}>
-        {[["dashboard","📊","Dashboard"],["new","✍️","Analyser un call"],["history","📋","Mes calls"],["team","🃏","L'Équipe"]].map(([id,icon,lbl]) => (
+        {[["dashboard","📊","Dashboard"],["new","✍️","Analyser un call"],["history","📋","Mes calls"],["objectives","🎯", pendingObjectives.length > 0 ? `Objectifs (${pendingObjectives.length})` : "Objectifs"],["team","🃏","L'Équipe"]].map(([id,icon,lbl]) => (
           <button key={id} onClick={() => setPage(id)} style={{ background: "none", border: "none", borderBottom: page === id ? `2px solid ${V.neon}` : "2px solid transparent", color: page === id ? V.neon : V.s5, fontSize: 13, fontWeight: 600, padding: "12px 18px", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, transition: "all .2s" }}>{icon} {lbl}</button>
         ))}
         {(page === "review" || page === "detail") && (
@@ -1622,6 +1623,172 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
             })}
           </div>
         </>)}
+
+        {/* ══ OBJECTIFS ════════════════════════════════════════════════════════════ */}
+        {page === "objectives" && (() => {
+          const pending   = objectives.filter(o => o.status === "pending");
+          const validated = objectives.filter(o => o.status === "validated");
+          const failed    = objectives.filter(o => o.status === "failed");
+          const total     = objectives.length;
+          const validRate = total ? Math.round((validated.length / total) * 100) : 0;
+          const priorityColor = { high: V.orange, medium: V.blue, low: V.s5 };
+          const priorityLabel = { high: "🔴 Haute", medium: "🟡 Moyenne", low: "🟢 Basse" };
+          const [selObj, setSelObj] = useState(null);
+
+          const getReviewForObj = (obj) => {
+            if (!obj.evaluatedAt) return null;
+            const evalDate = obj.evaluatedAt.toDate ? obj.evaluatedAt.toDate() : new Date(obj.evaluatedAt);
+            return reviews.find(r => {
+              const d = r.createdAt?.toDate ? r.createdAt.toDate() : new Date(r.createdAt || 0);
+              return Math.abs(d - evalDate) < 60000;
+            }) || reviews[0];
+          };
+
+          return (<>
+            {/* Header stats */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>🎯 Mes Objectifs Coach</div>
+              <div style={{ fontSize: 12, color: V.s5 }}>Générés automatiquement après chaque analyse · Validés au call suivant</div>
+            </div>
+
+            {/* KPIs */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
+              {[
+                { label: "En cours",    value: pending.length,   icon: "⏳", color: V.orange },
+                { label: "Validés",     value: validated.length, icon: "✅", color: "#10B981" },
+                { label: "Ratés",       value: failed.length,    icon: "❌", color: "#EF4444" },
+                { label: "Taux succès", value: validRate + "%",  icon: "📈", color: V.neon },
+              ].map(k => (
+                <div key={k.label} style={{ ...card(), marginBottom: 0, textAlign: "center", padding: "16px 10px" }}>
+                  <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: k.color }}>{k.value}</div>
+                  <div style={{ fontSize: 10, color: V.s5, marginTop: 2, textTransform: "uppercase", letterSpacing: "0.8px" }}>{k.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Objectifs en cours */}
+            {pending.length > 0 && (
+              <div style={card()}>
+                <span style={sLabel}>⏳ En cours — À valider au prochain call</span>
+                {pending.map((obj, i) => (
+                  <div key={obj.id} onClick={() => setSelObj(selObj?.id === obj.id ? null : obj)}
+                    style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${priorityColor[obj.priority] || V.border}30`, borderLeft: `3px solid ${priorityColor[obj.priority] || V.border}`, borderRadius: 10, padding: "14px", marginBottom: 10, cursor: "pointer", transition: "background .2s" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${priorityColor[obj.priority] || V.border}20`, border: `2px solid ${priorityColor[obj.priority] || V.border}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: priorityColor[obj.priority] || V.s5, flexShrink: 0 }}>{i + 1}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: V.white }}>{obj.title}</span>
+                          <span style={{ fontSize: 9, color: priorityColor[obj.priority] || V.s5, background: `${priorityColor[obj.priority] || V.border}15`, padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>{priorityLabel[obj.priority] || obj.priority}</span>
+                          <span style={{ fontSize: 10, color: V.s5 }}>📋 {obj.criterionLabel}</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: V.s5, lineHeight: 1.6, marginBottom: selObj?.id === obj.id ? 10 : 0 }}>{obj.description}</div>
+                        {selObj?.id === obj.id && obj.example && (
+                          <div style={{ background: `${V.neon}10`, border: `1px solid ${V.neon}25`, borderRadius: 8, padding: "10px 12px", fontSize: 12, color: V.neon, fontStyle: "italic", marginTop: 8 }}>
+                            <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, fontStyle: "normal" }}>💬 Phrase à utiliser</div>
+                            "{obj.example}"
+                          </div>
+                        )}
+                      </div>
+                      <span style={{ color: V.s4, fontSize: 12 }}>{selObj?.id === obj.id ? "▲" : "▼"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Objectifs validés */}
+            {validated.length > 0 && (
+              <div style={card()}>
+                <span style={sLabel}>✅ Objectifs validés — Comment tu les as atteints</span>
+                {validated.map((obj) => {
+                  const review = getReviewForObj(obj);
+                  const score = obj.evaluatedScore || 0;
+                  const scoreObj = SCORES.find(s => s.value === score);
+                  return (
+                    <div key={obj.id} onClick={() => setSelObj(selObj?.id === obj.id ? null : obj)}
+                      style={{ background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.2)", borderLeft: "3px solid #10B981", borderRadius: 10, padding: "14px", marginBottom: 10, cursor: "pointer" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#10B98120", border: "2px solid #10B98150", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>✅</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: V.white }}>{obj.title}</span>
+                            <span style={{ fontSize: 11, color: "#10B981", background: "#10B98115", padding: "2px 10px", borderRadius: 20, fontWeight: 600 }}>Validé ✓</span>
+                            {scoreObj && <span style={{ fontSize: 11, color: scoreObj.color, background: `${scoreObj.color}15`, padding: "2px 10px", borderRadius: 20, fontWeight: 600 }}>{scoreObj.label}</span>}
+                          </div>
+                          <div style={{ fontSize: 12, color: V.s5, marginBottom: 4 }}>{obj.description}</div>
+                          {obj.evaluatedAt && <div style={{ fontSize: 10, color: "#10B98180" }}>✓ Validé le {new Date(obj.evaluatedAt.toDate ? obj.evaluatedAt.toDate() : obj.evaluatedAt).toLocaleDateString("fr-FR")}</div>}
+
+                          {/* Détail si sélectionné */}
+                          {selObj?.id === obj.id && (<>
+                            {obj.example && (
+                              <div style={{ background: `${V.neon}10`, border: `1px solid ${V.neon}25`, borderRadius: 8, padding: "10px 12px", fontSize: 12, color: V.neon, fontStyle: "italic", marginTop: 10 }}>
+                                <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, fontStyle: "normal" }}>💬 Ce que tu devais dire</div>
+                                "{obj.example}"
+                              </div>
+                            )}
+                            {review && (
+                              <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${V.border}`, borderRadius: 8, padding: "12px", marginTop: 10 }}>
+                                <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>📋 Call où tu l'as validé</div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                  <div style={{ fontSize: 13, color: V.white, fontWeight: 600 }}>{review.prospectName || "Prospect"}</div>
+                                  <div style={{ fontSize: 11, color: V.s5 }}>·</div>
+                                  <div style={{ fontSize: 11, color: V.s5 }}>{review.callDate || "—"}</div>
+                                  <div style={{ marginLeft: "auto", fontSize: 14, fontWeight: 800, color: getMedal(review.globalPct||0).color }}>{review.globalPct||0}%</div>
+                                </div>
+                                {review.justifications?.[obj.criterionId] && (
+                                  <div style={{ fontSize: 12, color: V.s5, marginTop: 8, padding: "8px 10px", background: "#10B98110", borderRadius: 6, borderLeft: "2px solid #10B981", lineHeight: 1.6 }}>
+                                    <span style={{ color: "#10B981", fontWeight: 600 }}>Analyse du coach : </span>
+                                    {review.justifications[obj.criterionId]}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>)}
+                        </div>
+                        <span style={{ color: V.s4, fontSize: 12, flexShrink: 0 }}>{selObj?.id === obj.id ? "▲" : "▼"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Objectifs ratés */}
+            {failed.length > 0 && (
+              <div style={card()}>
+                <span style={sLabel}>❌ Objectifs ratés — À retenter</span>
+                {failed.map((obj) => (
+                  <div key={obj.id} style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderLeft: "3px solid #EF4444", borderRadius: 10, padding: "14px", marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#EF444420", border: "2px solid #EF444450", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>❌</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: V.white }}>{obj.title}</span>
+                          <span style={{ fontSize: 11, color: "#EF4444", background: "#EF444415", padding: "2px 10px", borderRadius: 20, fontWeight: 600 }}>Non atteint</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>{obj.description}</div>
+                        {obj.example && (
+                          <div style={{ fontSize: 11, color: "#EF444480", fontStyle: "italic" }}>💬 "{obj.example}"</div>
+                        )}
+                        <div style={{ fontSize: 11, color: "#EF444460", marginTop: 4 }}>Retente cet objectif au prochain call 💪</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {objectives.length === 0 && (
+              <div style={{ ...card(), textAlign: "center", padding: 60 }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Aucun objectif encore</div>
+                <div style={{ color: V.s5, fontSize: 13, marginBottom: 24 }}>Analyse un call pour recevoir tes premiers objectifs personnalisés du coach IA.</div>
+                <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 12, color: V.white, fontWeight: 700, fontSize: 14, padding: "12px 28px", cursor: "pointer", fontFamily: "inherit" }}>✍️ Analyser un call</button>
+              </div>
+            )}
+          </>);
+        })()}
 
         {/* ══ DÉTAIL ══════════════════════════════════════════════════════════════ */}
         {page === "detail" && selectedReview && (() => {
