@@ -912,6 +912,7 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [reviews, setReviews] = useState([]); const [allReviews, setAllReviews] = useState([]);
   const [objectives, setObjectives] = useState([]);
+  const [selObj, setSelObj] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
   const [saveStatus, setSaveStatus] = useState(""); const [reviewTab, setReviewTab] = useState("review");
   const [transcript, setTranscript] = useState("");
@@ -1633,7 +1634,6 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
           const validRate = total ? Math.round((validated.length / total) * 100) : 0;
           const priorityColor = { high: V.orange, medium: V.blue, low: V.s5 };
           const priorityLabel = { high: "🔴 Haute", medium: "🟡 Moyenne", low: "🟢 Basse" };
-          const [selObj, setSelObj] = useState(null);
 
           const getReviewForObj = (obj) => {
             if (!obj.evaluatedAt) return null;
