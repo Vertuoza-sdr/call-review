@@ -281,6 +281,18 @@ async function callAPI(system, content, maxT = 4000) {
 
 // ── FIFA Card ─────────────────────────────────────────────────────────────────
 function FifaCard({ name, avg, medal, reviews }) {
+  const [photoUrl, setPhotoUrl] = useState(() => localStorage.getItem("vertuoza_photo") || "");
+  const [editing, setEditing] = useState(false);
+  const [inputVal, setInputVal] = useState(photoUrl);
+  const [imgError, setImgError] = useState(false);
+
+  const savePhoto = () => {
+    setPhotoUrl(inputVal);
+    localStorage.setItem("vertuoza_photo", inputVal);
+    setEditing(false);
+    setImgError(false);
+  };
+
   const cardColors = {
     "Gold":     { bg: "#1a1200", border: "#FFD700", accent: "#FFD700", shine: "#FFD70030", text: "#FFE566" },
     "Silver":   { bg: "#111820", border: "#C0C0C0", accent: "#C0C0C0", shine: "#C0C0C020", text: "#D8D8D8" },
@@ -291,18 +303,17 @@ function FifaCard({ name, avg, medal, reviews }) {
   const C = cardColors[medal.label] || cardColors["Débutant"];
 
   const statMap = [
-    { key: "OUV", label: "Ouverture",  sectionIdx: 0 },
-    { key: "DIS", label: "Discovery",  sectionIdx: 1 },
-    { key: "PIT", label: "Pitch",      sectionIdx: 2 },
-    { key: "CLO", label: "Closing",    sectionIdx: 3 },
+    { key: "OUV", sectionIdx: 0 },
+    { key: "DIS", sectionIdx: 1 },
+    { key: "PIT", sectionIdx: 2 },
+    { key: "CLO", sectionIdx: 3 },
   ];
 
   const getStat = (sIdx) => {
-    if (!reviews.length) return 0;
+    if (!reviews.length) return 40;
     const section = CRITERIA[sIdx];
-    const avg = Math.round(reviews.reduce((a, r) => a + sectionPct(section, r.scores || {}), 0) / reviews.length);
-    // Convert 0-100 to FIFA-style 40-99
-    return Math.max(40, Math.min(99, Math.round(40 + (avg / 100) * 59)));
+    const a = Math.round(reviews.reduce((acc, r) => acc + sectionPct(section, r.scores || {}), 0) / reviews.length);
+    return Math.max(40, Math.min(99, Math.round(40 + (a / 100) * 59)));
   };
 
   const totalCalls = reviews.length;
@@ -311,26 +322,21 @@ function FifaCard({ name, avg, medal, reviews }) {
     const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
     return (new Date() - d) < 7 * 86400000;
   }).length;
-
-  // Overall FIFA-style rating: 40-99
   const overallRating = avg ? Math.max(40, Math.min(99, Math.round(40 + (avg / 100) * 59))) : 40;
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
       <div style={{
         width: 220, position: "relative",
-        background: C.bg,
-        border: `2px solid ${C.border}`,
-        borderRadius: 16,
-        padding: "20px 18px 18px",
+        background: C.bg, border: `2px solid ${C.border}`,
+        borderRadius: 16, padding: "20px 18px 18px",
         boxShadow: `0 0 30px ${C.shine}, inset 0 0 60px ${C.shine}`,
-        fontFamily: "'Gantari',sans-serif",
-        overflow: "hidden",
+        fontFamily: "'Gantari',sans-serif", overflow: "hidden",
       }}>
-        {/* Shine overlay top */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: `${C.shine}`, borderRadius: "14px 14px 50% 50%", pointerEvents: "none" }}/>
+        {/* Shine overlay */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, background: C.shine, borderRadius: "14px 14px 50% 50%", pointerEvents: "none" }}/>
 
-        {/* Top row: rating + position + medal */}
+        {/* Top row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, position: "relative", zIndex: 1 }}>
           <div>
             <div style={{ fontSize: 40, fontWeight: 800, color: C.text, lineHeight: 1, letterSpacing: "-2px" }}>{overallRating}</div>
@@ -343,15 +349,26 @@ function FifaCard({ name, avg, medal, reviews }) {
           </div>
         </div>
 
-        {/* Avatar placeholder — initials */}
-        <div style={{
-          width: 80, height: 80, borderRadius: "50%", margin: "0 auto 12px",
-          background: `${C.accent}20`, border: `2px solid ${C.accent}60`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 32, fontWeight: 800, color: C.text,
-          position: "relative", zIndex: 1,
-        }}>
-          {name.slice(0, 2).toUpperCase()}
+        {/* Avatar — photo ou initiales */}
+        <div
+          onClick={() => setEditing(true)}
+          title="Clique pour changer ta photo"
+          style={{
+            width: 80, height: 80, borderRadius: "50%", margin: "0 auto 12px",
+            border: `2px solid ${C.accent}60`, overflow: "hidden",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "relative", zIndex: 1, cursor: "pointer",
+            background: `${C.accent}20`,
+          }}>
+          {photoUrl && !imgError ? (
+            <img src={photoUrl} alt={name} onError={() => setImgError(true)}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
+          ) : (
+            <div style={{ fontSize: 28, fontWeight: 800, color: C.text, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <span>{name.slice(0, 2).toUpperCase()}</span>
+              <span style={{ fontSize: 8, color: `${C.accent}80`, fontWeight: 500 }}>+ photo</span>
+            </div>
+          )}
         </div>
 
         {/* Name */}
@@ -365,7 +382,7 @@ function FifaCard({ name, avg, medal, reviews }) {
         {/* Divider */}
         <div style={{ height: 1, background: `${C.border}40`, marginBottom: 12 }}/>
 
-        {/* Stats FIFA */}
+        {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", position: "relative", zIndex: 1 }}>
           {statMap.map(s => (
             <div key={s.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -374,11 +391,11 @@ function FifaCard({ name, avg, medal, reviews }) {
             </div>
           ))}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>CAL</span>
+            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700 }}>CAL</span>
             <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{Math.min(99, totalCalls * 3 + 40)}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: "0.5px" }}>SEM</span>
+            <span style={{ fontSize: 10, color: C.accent, fontWeight: 700 }}>SEM</span>
             <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{weekCalls}</span>
           </div>
         </div>
@@ -386,15 +403,38 @@ function FifaCard({ name, avg, medal, reviews }) {
         {/* Divider */}
         <div style={{ height: 1, background: `${C.border}40`, margin: "12px 0 10px" }}/>
 
-        {/* Footer Vertuoza */}
+        {/* Footer */}
         <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
           <div style={{ fontSize: 9, color: `${C.accent}80`, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase" }}>VERTUOZA · CALL REVIEW</div>
           <div style={{ fontSize: 9, color: `${C.accent}50`, marginTop: 2 }}>{totalCalls} call{totalCalls !== 1 ? "s" : ""} analysé{totalCalls !== 1 ? "s" : ""}</div>
         </div>
 
-        {/* Corner decoration */}
         <div style={{ position: "absolute", bottom: -10, right: -10, width: 60, height: 60, borderRadius: "50%", background: `${C.accent}08`, pointerEvents: "none" }}/>
       </div>
+
+      {/* Photo URL input */}
+      {editing ? (
+        <div style={{ width: 220, background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 12, padding: 12 }}>
+          <div style={{ fontSize: 10, color: V.s5, marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>URL de ta photo</div>
+          <input
+            type="text"
+            placeholder="https://... (LinkedIn, Slack...)"
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && savePhoto()}
+            autoFocus
+            style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: V.white, fontSize: 12, padding: "8px 10px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}
+          />
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={savePhoto} style={{ flex: 1, background: V.blue, border: "none", borderRadius: 8, color: V.white, fontSize: 12, fontWeight: 700, padding: "7px", cursor: "pointer", fontFamily: "inherit" }}>Appliquer</button>
+            <button onClick={() => setEditing(false)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: V.s5, fontSize: 12, padding: "7px 12px", cursor: "pointer", fontFamily: "inherit" }}>Annuler</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => { setInputVal(photoUrl); setEditing(true); }} style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 11, padding: "6px 16px", cursor: "pointer", fontFamily: "inherit" }}>
+          📷 {photoUrl ? "Changer la photo" : "Ajouter ta photo"}
+        </button>
+      )}
     </div>
   );
 }
