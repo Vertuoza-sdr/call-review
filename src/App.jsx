@@ -912,8 +912,11 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [reviews, setReviews] = useState([]); const [allReviews, setAllReviews] = useState([]);
   const [objectives, setObjectives] = useState([]);
+  const [allObjectives, setAllObjectives] = useState([]);
   const [selObj, setSelObj] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedSdr, setSelectedSdr] = useState(null); // for admin view
   const [saveStatus, setSaveStatus] = useState(""); const [reviewTab, setReviewTab] = useState("review");
   const [transcript, setTranscript] = useState("");
   const [scores, setScores] = useState({}); const [justifications, setJustifications] = useState({});
@@ -928,6 +931,20 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, u => { setUser(u); setAuthLoading(false); });
     return unsub;
   }, []);
+
+  // Vérifier si admin
+  useEffect(() => {
+    if (!user) return;
+    const checkAdmin = async () => {
+      try {
+        const adminDoc = await import("firebase/firestore").then(({ getDoc, doc: fDoc }) =>
+          getDoc(fDoc(db, "admins", user.uid))
+        );
+        setIsAdmin(adminDoc.exists());
+      } catch { setIsAdmin(false); }
+    };
+    checkAdmin();
+  }, [user]);
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "reviews"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
@@ -944,6 +961,12 @@ export default function App() {
     const q = query(collection(db, "objectives"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
     return onSnapshot(q, snap => setObjectives(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const q = query(collection(db, "objectives"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, snap => setAllObjectives(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+  }, [user, isAdmin]);
 
   const handleAuth = async () => {
     setAuthBusy(true); setAuthError("");
@@ -1000,10 +1023,22 @@ export default function App() {
   };
 
   const deleteReview = async (id) => {
-    const r = reviews.find(r => r.id === id);
-    if (!r || r.userId !== user?.uid) return;
+    const r = reviews.find(r => r.id === id) || allReviews.find(r => r.id === id);
+    if (!r) return;
+    // Seul le propriétaire ou un admin peut supprimer
+    if (r.userId !== user?.uid && !isAdmin) return;
     await deleteDoc(doc(db, "reviews", id));
     if (page === "detail") setPage("history");
+  };
+
+  const clearAllObjectives = async (targetUserId = null) => {
+    if (!window.confirm("Supprimer tous les objectifs ?")) return;
+    const toDelete = targetUserId
+      ? objectives.filter(o => o.userId === targetUserId)
+      : isAdmin ? objectives : objectives.filter(o => o.userId === user?.uid);
+    for (const o of toDelete) {
+      try { await deleteDoc(doc(db, "objectives", o.id)); } catch {}
+    }
   };
 
   const handleAnalyze = async () => {
@@ -1160,6 +1195,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
             <span style={{ fontSize: 12, fontWeight: 600, color: todayReviews >= DAILY_GOAL ? "#10B981" : V.s5 }}>{todayReviews}/{DAILY_GOAL} aujourd'hui</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isAdmin && <span style={{ fontSize: 10, color: V.neon, background: `${V.neon}15`, border: `1px solid ${V.neon}40`, borderRadius: 20, padding: "2px 8px", fontWeight: 700, letterSpacing: "0.5px" }}>ADMIN</span>}
             <span style={{ fontSize: 16 }}>{myMedal.icon}</span>
             <span style={{ fontSize: 12, color: V.s5 }}>{user.email.split("@")[0]}</span>
           </div>
@@ -1169,7 +1205,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
 
       {/* Nav */}
       <div style={{ borderBottom: `1px solid ${V.border}`, display: "flex", padding: "0 24px", background: V.s1 }}>
-        {[["dashboard","📊","Dashboard"],["new","✍️","Analyser un call"],["history","📋","Mes calls"],["objectives","🎯", pendingObjectives.length > 0 ? `Objectifs (${pendingObjectives.length})` : "Objectifs"],["team","🃏","L'Équipe"]].map(([id,icon,lbl]) => (
+        {[["dashboard","📊","Dashboard"],["new","✍️","Analyser un call"],["history","📋","Mes calls"],["objectives","🎯", pendingObjectives.length > 0 ? `Objectifs (${pendingObjectives.length})` : "Objectifs"],["team","🃏","L'Équipe"],...(isAdmin ? [["admin","⚙️","Admin"]] : [])].map(([id,icon,lbl]) => (
           <button key={id} onClick={() => setPage(id)} style={{ background: "none", border: "none", borderBottom: page === id ? `2px solid ${V.neon}` : "2px solid transparent", color: page === id ? V.neon : V.s5, fontSize: 13, fontWeight: 600, padding: "12px 18px", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, transition: "all .2s" }}>{icon} {lbl}</button>
         ))}
         {(page === "review" || page === "detail") && (
@@ -1492,7 +1528,9 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
                       <span style={{ fontSize: 11, color: m.color, fontWeight: 600 }}>{m.label}</span>
                     </div>
                   </div>
-                  <button onClick={e => { e.stopPropagation(); if (window.confirm("Supprimer ce call ?")) deleteReview(r.id); }} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>🗑️ Supprimer</button>
+                  {(r.userId === user?.uid || isAdmin) && (
+                    <button onClick={e => { e.stopPropagation(); if (window.confirm("Supprimer ce call ?")) deleteReview(r.id); }} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "6px 12px", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>🗑️ Supprimer</button>
+                  )}
                 </div>
               </div>
             );
@@ -1647,7 +1685,12 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
           return (<>
             {/* Header stats */}
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>🎯 Mes Objectifs Coach</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>🎯 Mes Objectifs Coach</div>
+                {objectives.length > 0 && (
+                  <button onClick={clearAllObjectives} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Tout effacer</button>
+                )}
+              </div>
               <div style={{ fontSize: 12, color: V.s5 }}>Générés automatiquement après chaque analyse · Validés au call suivant</div>
             </div>
 
@@ -1790,10 +1833,217 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
           </>);
         })()}
 
+        {/* ══ ADMIN ════════════════════════════════════════════════════════════════ */}
+        {page === "admin" && isAdmin && (() => {
+          // Build SDR profiles from allReviews + allObjectives
+          const sdrs = Object.values(
+            allReviews.reduce((acc, r) => {
+              const uid = r.userId || "unknown";
+              if (!acc[uid]) acc[uid] = { uid, name: r.sdrName || r.userEmail?.split("@")[0] || "?", email: r.userEmail || "", reviews: [] };
+              acc[uid].reviews.push(r);
+              return acc;
+            }, {})
+          ).map(s => ({
+            ...s,
+            avg: s.reviews.length ? Math.round(s.reviews.reduce((a,r) => a+(r.globalPct||0),0)/s.reviews.length) : 0,
+            medal: getMedal(s.reviews.length ? Math.round(s.reviews.reduce((a,r) => a+(r.globalPct||0),0)/s.reviews.length) : 0),
+            objectives: allObjectives.filter(o => o.userId === s.uid),
+          })).sort((a,b) => b.avg - a.avg);
+
+          const activeSdr = selectedSdr ? sdrs.find(s => s.uid === selectedSdr) : null;
+          const priorityColor = { high: V.orange, medium: V.blue, low: V.s5 };
+
+          return (<>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              {activeSdr && (
+                <button onClick={() => setSelectedSdr(null)} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 10, color: V.s5, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>← Retour</button>
+              )}
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>
+                  {activeSdr ? `👤 ${activeSdr.name}` : "⚙️ Vue Admin — Équipe"}
+                </div>
+                <div style={{ fontSize: 12, color: V.neon, fontWeight: 600 }}>Mode Administrateur</div>
+              </div>
+            </div>
+
+            {/* ── Vue liste des SDR ── */}
+            {!activeSdr && (<>
+              {/* KPIs globaux */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
+                {[
+                  { label: "SDR actifs", value: sdrs.length, icon: "👥", color: V.neon },
+                  { label: "Total calls", value: allReviews.length, icon: "🎙️", color: V.blue },
+                  { label: "Score équipe", value: sdrs.length ? Math.round(sdrs.reduce((a,s)=>a+s.avg,0)/sdrs.length) + "%" : "—", icon: "📊", color: "#10B981" },
+                  { label: "Obj. en cours", value: allObjectives.filter(o=>o.status==="pending").length, icon: "🎯", color: V.orange },
+                ].map(k => (
+                  <div key={k.label} style={{ ...card(), marginBottom: 0, textAlign: "center", padding: "16px 10px" }}>
+                    <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: k.color }}>{k.value}</div>
+                    <div style={{ fontSize: 10, color: V.s5, marginTop: 2, textTransform: "uppercase", letterSpacing: "0.8px" }}>{k.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Cartes SDR cliquables */}
+              {sdrs.map((sdr, i) => {
+                const sdrPending = sdr.objectives.filter(o => o.status === "pending").length;
+                const sdrValidated = sdr.objectives.filter(o => o.status === "validated").length;
+                const weekCalls = sdr.reviews.filter(r => { if (!r.createdAt) return false; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); return (new Date()-d) < 7*86400000; }).length;
+                const trend = sdr.reviews.length >= 2 ? (sdr.reviews[0].globalPct||0)-(sdr.reviews[1].globalPct||0) : 0;
+                return (
+                  <div key={sdr.uid} onClick={() => setSelectedSdr(sdr.uid)}
+                    style={{ ...card(), cursor: "pointer", transition: "border-color .2s", border: `1px solid ${i===0?`${sdr.medal.color}40`:V.border}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      {/* Rang */}
+                      <span style={{ fontSize: 20, width: 28, textAlign: "center", flexShrink: 0 }}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}</span>
+                      {/* Avatar */}
+                      <div style={{ width: 44, height: 44, borderRadius: 10, background: `${sdr.medal.color}15`, border: `2px solid ${sdr.medal.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: sdr.medal.color, flexShrink: 0 }}>
+                        {sdr.name.slice(0,2).toUpperCase()}
+                      </div>
+                      {/* Infos */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: V.white }}>{sdr.name}</div>
+                        <div style={{ fontSize: 11, color: V.s5, marginTop: 2 }}>{sdr.email}</div>
+                        <div style={{ display: "flex", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 10, color: V.s5 }}>🎙️ {sdr.reviews.length} calls</span>
+                          <span style={{ fontSize: 10, color: V.s5 }}>📅 {weekCalls} cette sem.</span>
+                          {sdrPending > 0 && <span style={{ fontSize: 10, color: V.orange }}>⏳ {sdrPending} obj. en cours</span>}
+                          {sdrValidated > 0 && <span style={{ fontSize: 10, color: "#10B981" }}>✅ {sdrValidated} validés</span>}
+                          {trend !== 0 && <span style={{ fontSize: 10, color: trend>0?"#10B981":"#EF4444" }}>{trend>0?`↗+${trend}%`:`↘${trend}%`}</span>}
+                        </div>
+                      </div>
+                      {/* Score */}
+                      <div style={{ textAlign: "center", flexShrink: 0 }}>
+                        <div style={{ fontSize: 24, fontWeight: 900, color: sdr.medal.color }}>{sdr.avg}%</div>
+                        <div style={{ fontSize: 12 }}>{sdr.medal.icon}</div>
+                        <Stars count={sdr.medal.stars} color={sdr.medal.color}/>
+                      </div>
+                      <span style={{ color: V.s4, fontSize: 14 }}>→</span>
+                    </div>
+
+                    {/* Mini barres sections */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginTop: 12 }}>
+                      {CRITERIA.map(section => {
+                        const avg = sdr.reviews.length ? Math.round(sdr.reviews.reduce((a,r)=>a+sectionPct(section,r.scores||{}),0)/sdr.reviews.length) : 0;
+                        return (
+                          <div key={section.section}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                              <span style={{ fontSize: 9, color: V.s5 }}>{section.icon}</span>
+                              <span style={{ fontSize: 9, color: section.color, fontWeight: 700 }}>{avg}%</span>
+                            </div>
+                            <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 2 }}>
+                              <div style={{ height: "100%", width: `${avg}%`, background: section.color, borderRadius: 2 }}/>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </>)}
+
+            {/* ── Vue détail SDR (admin) ── */}
+            {activeSdr && (<>
+              {/* Score + médaille */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 16 }}>
+                {[
+                  { label: "Score moyen", value: activeSdr.avg + "%", icon: activeSdr.medal.icon, color: activeSdr.medal.color },
+                  { label: "Calls analysés", value: activeSdr.reviews.length, icon: "🎙️", color: V.blue },
+                  { label: "Obj. validés", value: activeSdr.objectives.filter(o=>o.status==="validated").length, icon: "✅", color: "#10B981" },
+                  { label: "Obj. en cours", value: activeSdr.objectives.filter(o=>o.status==="pending").length, icon: "⏳", color: V.orange },
+                ].map(k => (
+                  <div key={k.label} style={{ ...card(), marginBottom: 0, textAlign: "center", padding: "14px 8px" }}>
+                    <div style={{ fontSize: 20, marginBottom: 4 }}>{k.icon}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: k.color }}>{k.value}</div>
+                    <div style={{ fontSize: 10, color: V.s5, marginTop: 2, textTransform: "uppercase", letterSpacing: "0.8px" }}>{k.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Scores par section */}
+              <div style={card()}>
+                <span style={sLabel}>Performance par section</span>
+                {CRITERIA.map(section => {
+                  const avg = activeSdr.reviews.length ? Math.round(activeSdr.reviews.reduce((a,r)=>a+sectionPct(section,r.scores||{}),0)/activeSdr.reviews.length) : 0;
+                  return <SectionBar key={section.section} label={section.section} pct={avg} color={section.color} icon={section.icon}/>;
+                })}
+              </div>
+
+              {/* Objectifs en cours */}
+              {activeSdr.objectives.filter(o=>o.status==="pending").length > 0 && (
+                <div style={card()}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <span style={sLabel}>⏳ Objectifs en cours</span>
+                    <button onClick={() => clearAllObjectives(activeSdr.uid)} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Effacer</button>
+                  </div>
+                  {activeSdr.objectives.filter(o=>o.status==="pending").map((obj,i) => (
+                    <div key={obj.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${priorityColor[obj.priority]||V.border}30`, borderLeft: `3px solid ${priorityColor[obj.priority]||V.border}`, borderRadius: 10, padding: "12px 14px", marginBottom: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 4 }}>{obj.title}</div>
+                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>{obj.description}</div>
+                      {obj.example && <div style={{ fontSize: 11, color: V.neon, fontStyle: "italic" }}>💬 "{obj.example}"</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Derniers calls */}
+              <div style={card()}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <span style={sLabel}>📋 Historique des calls</span>
+                </div>
+                {activeSdr.reviews.slice(0,10).map(r => {
+                  const m = getMedal(r.globalPct||0);
+                  return (
+                    <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 10, marginBottom: 8, cursor: "pointer" }}
+                      onClick={() => { setSelectedReview(r); setPage("detail"); }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 8, background: `${m.color}15`, border: `1.5px solid ${m.color}40`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <span style={{ fontSize: 10 }}>{m.icon}</span>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: m.color }}>{r.globalPct||0}%</span>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: V.white }}>{r.prospectName||"Prospect"}{r.company?` · ${r.company}`:""}</div>
+                        <div style={{ fontSize: 11, color: V.s5 }}>{r.callDate||new Date(r.createdAt?.toDate?.()).toLocaleDateString("fr-FR")}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Stars count={m.stars} color={m.color}/>
+                        <span style={{ fontSize: 11, color: V.s5 }}>Voir →</span>
+                        <button onClick={e=>{e.stopPropagation();if(window.confirm("Supprimer ?"))deleteReview(r.id);}} style={{ background:"#EF444415",border:"none",borderRadius:6,color:"#EF4444",fontSize:10,padding:"3px 8px",cursor:"pointer",fontFamily:"inherit" }}>🗑️</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Badges débloqués */}
+              {(() => {
+                const sdrReviews = activeSdr.reviews;
+                const sdrObjs = activeSdr.objectives;
+                const earned = BADGES.filter(b => b.condition(sdrReviews, sdrObjs));
+                if (!earned.length) return null;
+                return (
+                  <div style={card()}>
+                    <span style={sLabel}>🛡️ Écussons débloqués ({earned.length}/{BADGES.length})</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {earned.map(b => (
+                        <div key={b.id} title={b.desc} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "8px 10px", background: "rgba(255,255,255,0.05)", border: `1px solid ${V.neon}30`, borderRadius: 10, minWidth: 60 }}>
+                          <div style={{ fontSize: 22 }}>{b.icon}</div>
+                          <div style={{ fontSize: 8, color: V.neon, textAlign: "center", fontWeight: 700 }}>{b.name}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </>)}
+          </>);
+        })()}
+
         {/* ══ DÉTAIL ══════════════════════════════════════════════════════════════ */}
         {page === "detail" && selectedReview && (() => {
           const r = selectedReview; const m = getMedal(r.globalPct || 0);
           const isOwner = r.userId === user?.uid;
+          const canDelete = isOwner || isAdmin;
           return (<>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
               <button onClick={() => setPage("history")} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 10, color: V.s5, padding: "9px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>← Retour</button>
@@ -1807,7 +2057,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
                   <Stars count={m.stars} color={m.color}/>
                   <div style={{ fontSize: 11, color: m.color, fontWeight: 600 }}>{m.icon} {m.label}</div>
                 </div>
-                {isOwner && (
+                {canDelete && (
                   <button onClick={() => { if (window.confirm("Supprimer ce call ?")) deleteReview(r.id); }} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 12, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Supprimer</button>
                 )}
               </div>
