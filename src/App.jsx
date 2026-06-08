@@ -667,192 +667,240 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
 function CoachCinematic() {
   const [phase, setPhase] = useState(0);
   const [msgIdx, setMsgIdx] = useState(0);
-  const [score, setScore] = useState(0);
   const [dots, setDots] = useState("");
+  const [blink, setBlink] = useState(true);
 
   const phases = [
-    {
-      label: "Écoute du call", icon: "📞", color: V.neon,
-      messages: [
-        "Hmm… intéressant comme ouverture.",
-        "Je note la façon dont il aborde le prospect…",
-        "Ah, il y a quelque chose à améliorer ici.",
-        "Bonne accroche ! On continue…",
-      ]
-    },
-    {
-      label: "Analyse comportementale", icon: "🧠", color: "#8B5CF6",
-      messages: [
-        "Le ratio parole/écoute… laisse à désirer.",
-        "La qualification du décisionnaire… pas terrible.",
-        "Vocabulaire BTP ? Je vérifie…",
-        "Ce passage sur les objections, il faut qu'on en parle.",
-      ]
-    },
-    {
-      label: "Rédaction des scripts experts", icon: "🎙️", color: V.orange,
-      messages: [
-        "Voici ce que j'aurais dit à sa place…",
-        "Conseil en cours de rédaction…",
-        "Je formule les meilleures pratiques terrain…",
-        "Presque, encore quelques ajustements…",
-      ]
-    },
-    {
-      label: "Génération des objectifs", icon: "🎯", color: "#10B981",
-      messages: [
-        "3 objectifs prioritaires identifiés.",
-        "Je prépare ton plan de progression…",
-        "Les badges déblocables sont en cours d'évaluation…",
-        "Dernière ligne droite, courage !",
-      ]
-    },
+    { label: "Écoute du call", icon: "📞", color: V.neon, sdrAction: "call",
+      messages: ["Hmm… intéressant comme ouverture.", "Je note la façon dont il aborde le prospect…", "Ah, quelque chose à améliorer ici.", "Bonne accroche ! On continue…"] },
+    { label: "Analyse comportementale", icon: "🧠", color: "#8B5CF6", sdrAction: "think",
+      messages: ["Le ratio parole/écoute… laisse à désirer.", "La qualification du décisionnaire… à revoir.", "Vocabulaire BTP ? Je vérifie…", "Ce passage sur les objections, il faut qu'on en parle."] },
+    { label: "Rédaction scripts experts", icon: "🎙️", color: V.orange, sdrAction: "write",
+      messages: ["Voici ce que j'aurais dit à sa place…", "Conseil en cours de rédaction…", "Je formule les meilleures pratiques terrain…", "Presque, encore quelques ajustements…"] },
+    { label: "Génération des objectifs", icon: "🎯", color: "#10B981", sdrAction: "win",
+      messages: ["3 objectifs prioritaires identifiés.", "Je prépare ton plan de progression…", "Les badges sont en cours d'évaluation…", "Dernière ligne droite, courage !"] },
   ];
 
-  // Avancer les phases toutes les 9 secondes
   useEffect(() => {
-    const t = setInterval(() => {
-      setPhase(p => Math.min(p + 1, phases.length - 1));
-      setMsgIdx(0);
-      setScore(s => Math.min(s + Math.round(Math.random() * 22 + 18), 99));
-    }, 9000);
+    const t = setInterval(() => { setPhase(p => Math.min(p + 1, phases.length - 1)); setMsgIdx(0); }, 9000);
     return () => clearInterval(t);
   }, []);
-
-  // Changer les messages toutes les 2.5s
   useEffect(() => {
-    const t = setInterval(() => {
-      setMsgIdx(i => (i + 1) % phases[phase].messages.length);
-    }, 2500);
+    const t = setInterval(() => setMsgIdx(i => (i + 1) % phases[phase].messages.length), 2500);
     return () => clearInterval(t);
   }, [phase]);
-
-  // Dots animés
   useEffect(() => {
     const t = setInterval(() => setDots(d => d.length >= 3 ? "" : d + "."), 400);
     return () => clearInterval(t);
   }, []);
-
-  // Score qui monte
   useEffect(() => {
-    const t = setInterval(() => {
-      setScore(s => s < 87 ? s + Math.round(Math.random() * 3) : s);
-    }, 300);
+    const t = setInterval(() => setBlink(b => !b), 800);
     return () => clearInterval(t);
   }, []);
 
-  const currentPhase = phases[phase];
+  const C = phases[phase].color;
+  const action = phases[phase].sdrAction;
   const progress = ((phase + 1) / phases.length) * 100;
 
   return (
-    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", fontFamily: "'Gantari',sans-serif" }}>
+    <div style={{ minHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 20px", fontFamily: "'Gantari',sans-serif" }}>
 
-      {/* Téléphone animé SVG */}
-      <div style={{ position: "relative", marginBottom: 32 }}>
-        {/* Glow */}
-        <div style={{ position: "absolute", inset: -30, background: `radial-gradient(ellipse, ${currentPhase.color}30 0%, transparent 70%)`, transition: "background .8s" }}/>
+      {/* ── Illustration SVG SDR + Coach ── */}
+      <div style={{ position: "relative", marginBottom: 28, width: 340, height: 200 }}>
+        {/* Glow ambiance */}
+        <div style={{ position: "absolute", inset: -20, background: `radial-gradient(ellipse at 50% 60%, ${C}20 0%, transparent 70%)`, transition: "background 1s", pointerEvents: "none" }}/>
 
-        <svg width={90} height={130} viewBox="0 0 90 130" style={{ position: "relative", zIndex: 1 }}>
-          {/* Corps téléphone */}
-          <rect x={8} y={4} width={74} height={122} rx={14} fill="#0D0D1F" stroke={currentPhase.color} strokeWidth={2.5}/>
-          {/* Écran */}
-          <rect x={14} y={16} width={62} height={90} rx={6} fill={`${currentPhase.color}15`}/>
-          {/* Bouton home */}
-          <circle cx={45} cy={118} r={5} fill="none" stroke={currentPhase.color} strokeWidth={1.5} opacity={0.6}/>
-          {/* Caméra */}
-          <circle cx={45} cy={10} r={2.5} fill={currentPhase.color} opacity={0.5}/>
+        <svg width={340} height={200} viewBox="0 0 340 200" style={{ position: "relative", zIndex: 1 }}>
 
-          {/* Contenu écran — icône de la phase */}
-          <text x={45} y={55} textAnchor="middle" fontSize={28}>{currentPhase.icon}</text>
+          {/* ══ FOND ══ */}
+          {/* Sol */}
+          <ellipse cx={170} cy={195} rx={140} ry={8} fill={`${C}15`}/>
 
-          {/* Score sur l'écran */}
-          <text x={45} y={80} textAnchor="middle" fill={currentPhase.color} fontSize={18} fontWeight={900}>{score}</text>
-          <text x={45} y={92} textAnchor="middle" fill={currentPhase.color} fontSize={8} opacity={0.7}>SCORE</text>
+          {/* ══ COACH (gauche) ══ */}
+          {/* Corps coach */}
+          <rect x={30} y={95} width={50} height={75} rx={10} fill="#0D1840"/>
+          <rect x={33} y={98} width={44} height={68} rx={8} fill="#001060"/>
+          {/* Veste coach */}
+          <rect x={30} y={95} width={50} height={40} rx={8} fill="#001880"/>
+          {/* Cravate */}
+          <rect x={52} y={100} width={6} height={28} rx={3} fill={C} opacity={0.8}/>
+          {/* Tête coach */}
+          <ellipse cx={55} cy={82} rx={22} ry={24} fill="#D4956A"/>
+          {/* Cheveux */}
+          <ellipse cx={55} cy={62} rx={22} ry={10} fill="#2D1A0A"/>
+          <rect x={33} y={62} width={44} height={12} rx={6} fill="#2D1A0A"/>
+          {/* Yeux coach */}
+          <ellipse cx={47} cy={80} rx={3.5} ry={4} fill="#1A0A00"/>
+          <ellipse cx={63} cy={80} rx={3.5} ry={4} fill="#1A0A00"/>
+          <circle cx={48} cy={79} r={1} fill="#fff" opacity={0.6}/>
+          <circle cx={64} cy={79} r={1} fill="#fff" opacity={0.6}/>
+          {/* Sourcils expressifs selon phase */}
+          {phase <= 1 ? <>
+            <path d="M44 73 Q47 70 50 73" fill="none" stroke="#2D1A0A" strokeWidth={2}/>
+            <path d="M60 73 Q63 70 66 73" fill="none" stroke="#2D1A0A" strokeWidth={2}/>
+          </> : <>
+            <path d="M44 72 Q47 75 50 72" fill="none" stroke="#2D1A0A" strokeWidth={2}/>
+            <path d="M60 72 Q63 75 66 72" fill="none" stroke="#2D1A0A" strokeWidth={2}/>
+          </>}
+          {/* Bouche coach */}
+          {phase >= 2
+            ? <path d="M49 90 Q55 95 61 90" fill="none" stroke="#8B4513" strokeWidth={2}/>
+            : <path d="M49 88 Q55 92 61 88" fill="none" stroke="#8B4513" strokeWidth={1.5}/>
+          }
+          {/* Bras coach tendu vers SDR */}
+          <path d="M80 115 Q110 100 120 105" fill="none" stroke="#001880" strokeWidth={12} strokeLinecap="round"/>
+          <path d="M80 115 Q110 100 120 105" fill="none" stroke="#0D1840" strokeWidth={8} strokeLinecap="round"/>
+          {/* Main coach pointant */}
+          <ellipse cx={124} cy={104} rx={8} ry={6} fill="#D4956A" transform="rotate(-20 124 104)"/>
+          {/* Doigt pointé */}
+          <rect x={128} y={99} width={14} height={5} rx={2.5} fill="#D4956A" transform="rotate(-15 128 99)"/>
+          {/* Badge COACH */}
+          <rect x={32} y={125} width={36} height={14} rx={4} fill={C} opacity={0.9}/>
+          <text x={50} y={135} textAnchor="middle" fill="#000" fontSize={7} fontWeight={900}>COACH</text>
+          {/* Clipboard */}
+          <rect x={20} y={100} width={24} height={32} rx={3} fill="#fff" opacity={0.9}/>
+          <rect x={22} y={104} width={20} height={2} rx={1} fill="#ccc"/>
+          <rect x={22} y={108} width={15} height={2} rx={1} fill="#ccc"/>
+          <rect x={22} y={112} width={18} height={2} rx={1} fill={C} opacity={0.8}/>
+          <rect x={22} y={116} width={12} height={2} rx={1} fill="#ccc"/>
+          <rect x={28} y={96} width={8} height={6} rx={2} fill="#888"/>
 
-          {/* Barres wifi animées */}
-          {[0,1,2].map(i => (
-            <rect key={i} x={20+i*8} y={100-i*5} width={5} height={5+i*5} rx={1.5}
-              fill={currentPhase.color} opacity={phase >= i ? 0.9 : 0.2}/>
-          ))}
+          {/* ══ SDR (droite) ══ */}
+          {/* Corps SDR */}
+          <rect x={220} y={90} width={56} height={80} rx={12} fill="#001640"/>
+          <rect x={224} y={94} width={48} height={72} rx={9} fill="#002060"/>
+          {/* Chemise SDR */}
+          <rect x={220} y={90} width={56} height={45} rx={10} fill="#003080"/>
+          {/* Cravate SDR */}
+          <rect x={245} y={95} width={7} height={32} rx={3} fill={V.orange} opacity={0.9}/>
+          {/* Tête SDR */}
+          <ellipse cx={248} cy={74} rx={24} ry={26} fill="#C68642"/>
+          {/* Cheveux SDR */}
+          <ellipse cx={248} cy={52} rx={24} ry={11} fill="#1A0A00"/>
+          <rect x={224} y={52} width={48} height={14} rx={7} fill="#1A0A00"/>
+          {/* Yeux SDR expressifs */}
+          <ellipse cx={239} cy={72} rx={4} ry={4.5} fill="#1A0A00"/>
+          <ellipse cx={257} cy={72} rx={4} ry={4.5} fill="#1A0A00"/>
+          <circle cx={240} cy={71} r={1.2} fill="#fff" opacity={0.7}/>
+          <circle cx={258} cy={71} r={1.2} fill="#fff" opacity={0.7}/>
+          {/* Expression SDR selon action */}
+          {action === "win"
+            ? <path d="M241 84 Q248 91 255 84" fill="none" stroke="#8B4513" strokeWidth={2.5}/>
+            : <path d="M241 83 Q248 87 255 83" fill="none" stroke="#8B4513" strokeWidth={2}/>
+          }
+          {/* Oreillette SDR */}
+          <circle cx={272} cy={72} r={7} fill="#1A1A3A" stroke={C} strokeWidth={1.5}/>
+          <circle cx={272} cy={72} r={3} fill={C} opacity={blink ? 0.9 : 0.3} style={{ transition: "opacity .3s" }}/>
+          <path d="M279 72 Q288 65 290 55" fill="none" stroke={C} strokeWidth={1.5} opacity={0.6}/>
+          {/* Fil oreillette */}
+          <path d="M272 79 Q272 88 265 92" fill="none" stroke="#333" strokeWidth={1.5}/>
+
+          {/* ══ ACTION selon phase ══ */}
+          {action === "call" && <>
+            {/* Ondes sonores autour de l'oreillette */}
+            {[14,20,27].map((r,i) => (
+              <circle key={i} cx={272} cy={72} r={r} fill="none" stroke={C} strokeWidth={1}
+                opacity={blink ? 0.5 - i*0.12 : 0.2 - i*0.05} style={{ transition: "opacity .4s" }}/>
+            ))}
+            {/* Téléphone dans la main */}
+            <rect x={205} y={108} width={24} height={40} rx={5} fill="#0D0D1F" stroke={C} strokeWidth={1.5}/>
+            <rect x={208} y={113} width={18} height={28} rx={3} fill={`${C}20`}/>
+            <text x={217} y={131} textAnchor="middle" fontSize={10}>📞</text>
+          </>}
+
+          {action === "think" && <>
+            {/* Bulle de pensée */}
+            <circle cx={285} cy={45} r={3} fill={C} opacity={0.5}/>
+            <circle cx={293} cy={35} r={5} fill={C} opacity={0.6}/>
+            <ellipse cx={305} cy={22} rx={18} ry={13} fill="#0D1840" stroke={C} strokeWidth={1.5}/>
+            <text x={305} y={26} textAnchor="middle" fill={C} fontSize={12}>🤔</text>
+            {/* Graphique dans les mains */}
+            <rect x={228} y={120} width={32} height={22} rx={4} fill="#fff" opacity={0.9}/>
+            <rect x={231} y={136} width={4} height={4} rx={1} fill={V.orange}/>
+            <rect x={237} y={130} width={4} height={10} rx={1} fill={C}/>
+            <rect x={243} y={126} width={4} height={14} rx={1} fill="#10B981"/>
+            <rect x={249} y={132} width={4} height={8} rx={1} fill="#8B5CF6}"/>
+          </>}
+
+          {action === "write" && <>
+            {/* Stylo dans la main */}
+            <rect x={210} y={118} width={30} height={6} rx={3} fill="#fff" opacity={0.9}/>
+            <polygon points="240,118 246,121 240,124" fill={V.orange}/>
+            {/* Lignes d'écriture */}
+            {[0,1,2].map(i => (
+              <rect key={i} x={213} y={128+i*6} width={i===1?18:22} height={2} rx={1} fill={C} opacity={0.6}/>
+            ))}
+            {/* Bulle discours */}
+            <path d={`M275 50 Q295 40 305 48 Q315 56 305 64 Q295 72 280 65 Q265 72 275 50`} fill="#0D1840" stroke={C} strokeWidth={1.5}/>
+            <text x={290} y={59} textAnchor="middle" fill={C} fontSize={9} fontWeight={700}>Script</text>
+          </>}
+
+          {action === "win" && <>
+            {/* Trophy */}
+            <text x={248} y={45} textAnchor="middle" fontSize={20} style={{ animation: "bounce .6s ease-in-out infinite alternate" }}>🏆</text>
+            {/* Confetti */}
+            {[[170,30,V.neon],[190,20,V.orange],[210,35,"#FFD700"],[230,25,"#10B981"],[165,50,"#8B5CF6"]].map(([cx,cy,fill],i) => (
+              <rect key={i} x={cx} y={cy} width={6} height={6} rx={1} fill={fill} opacity={0.8}
+                transform={`rotate(${i*35} ${cx+3} ${cy+3})`}/>
+            ))}
+            {/* Checkmark */}
+            <circle cx={168} cy={110} r={14} fill="#10B981" opacity={0.2}/>
+            <path d="M161 110 L166 116 L176 104" fill="none" stroke="#10B981" strokeWidth={2.5} strokeLinecap="round"/>
+          </>}
+
+          {/* ══ BULLE DIALOGUE COACH → SDR ══ */}
+          <path d="M85 75 Q120 55 160 62 Q185 65 185 78 Q185 92 160 95 Q140 98 115 90 Q90 95 85 75" fill="#0D1840" stroke={C} strokeWidth={1.5} opacity={0.95}/>
+          <text x={135} y={75} textAnchor="middle" fill={V.white} fontSize={8} fontWeight={600}>
+            {phases[phase].messages[msgIdx].length > 28
+              ? phases[phase].messages[msgIdx].slice(0,28) + "…"
+              : phases[phase].messages[msgIdx]}
+          </text>
+          <text x={135} y={86} textAnchor="middle" fill={C} fontSize={8} opacity={0.7}>
+            {phases[phase].icon} {phases[phase].label}
+          </text>
+
+          {/* Ligne entre les deux personnages */}
+          <line x1={83} y1={140} x2={220} y2={140} stroke={`${C}20`} strokeWidth={1} strokeDasharray="4 4"/>
+
         </svg>
+      </div>
 
-        {/* Onde sonore gauche */}
-        <div style={{ position: "absolute", left: -24, top: "30%", display: "flex", flexDirection: "column", gap: 4 }}>
-          {[20,32,24,36,20].map((h, i) => (
-            <div key={i} style={{ width: 3, height: h, background: currentPhase.color, borderRadius: 2, opacity: 0.6, animation: `pulse ${0.4 + i*0.1}s ease-in-out infinite alternate`, transition: "background .5s" }}/>
-          ))}
-        </div>
-        {/* Onde sonore droite */}
-        <div style={{ position: "absolute", right: -24, top: "30%", display: "flex", flexDirection: "column", gap: 4 }}>
-          {[24,36,20,32,28].map((h, i) => (
-            <div key={i} style={{ width: 3, height: h, background: currentPhase.color, borderRadius: 2, opacity: 0.6, animation: `pulse ${0.5 + i*0.1}s ease-in-out infinite alternate`, transition: "background .5s" }}/>
-          ))}
+      {/* Message principal */}
+      <div style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${C}30`, borderRadius: 16, padding: "14px 24px", marginBottom: 20, maxWidth: 380, textAlign: "center", transition: "border-color .5s" }}>
+        <div style={{ fontSize: 15, color: V.white, fontWeight: 600, lineHeight: 1.5 }}>
+          <span style={{ marginRight: 8 }}>{phases[phase].icon}</span>
+          {phases[phase].messages[msgIdx]}<span style={{ color: C }}>{dots}</span>
         </div>
       </div>
 
-      {/* Message coach — bulle */}
-      <div style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${currentPhase.color}30`, borderRadius: 16, padding: "14px 24px", marginBottom: 24, maxWidth: 380, textAlign: "center", minHeight: 56, display: "flex", alignItems: "center", justifyContent: "center", transition: "border-color .5s" }}>
-        <div style={{ fontSize: 15, color: V.white, fontWeight: 500, lineHeight: 1.5 }}>
-          <span style={{ fontSize: 18, marginRight: 8 }}>🤖</span>
-          {phases[phase].messages[msgIdx]}<span style={{ color: currentPhase.color }}>{dots}</span>
-        </div>
-      </div>
-
-      {/* Phase label */}
-      <div style={{ fontSize: 11, color: currentPhase.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: "2px", marginBottom: 20, transition: "color .5s" }}>
-        {currentPhase.icon} {currentPhase.label}
-      </div>
-
-      {/* Barre de progression globale */}
-      <div style={{ width: 320, marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-          {phases.map((p, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: i <= phase ? `${p.color}20` : "rgba(255,255,255,0.05)", border: `2px solid ${i <= phase ? p.color : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, transition: "all .5s" }}>
-                {i < phase ? "✓" : p.icon}
-              </div>
+      {/* Étapes */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
+        {phases.map((p, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: i <= phase ? `${p.color}20` : "rgba(255,255,255,0.05)", border: `2px solid ${i <= phase ? p.color : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, transition: "all .5s" }}>
+              {i < phase ? "✓" : p.icon}
             </div>
-          ))}
-        </div>
-        <div style={{ height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${progress}%`, background: `linear-gradient(90deg, ${V.blue}, ${currentPhase.color})`, borderRadius: 10, transition: "width 1s ease, background 0.8s" }}/>
-        </div>
+            {i < phases.length - 1 && <div style={{ width: 24, height: 2, background: i < phase ? C : "rgba(255,255,255,0.1)", borderRadius: 2, transition: "background .5s" }}/>}
+          </div>
+        ))}
       </div>
 
-      {/* Motivations rotatives */}
-      <div style={{ fontSize: 12, color: V.s5, fontStyle: "italic", textAlign: "center" }}>
+      {/* Barre globale */}
+      <div style={{ width: 320, height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
+        <div style={{ height: "100%", width: `${progress}%`, background: C, borderRadius: 10, transition: "width 1s ease, background .8s" }}/>
+      </div>
+
+      {/* Motivation */}
+      <div style={{ fontSize: 12, color: V.s5, fontStyle: "italic", textAlign: "center", maxWidth: 320 }}>
         {["💪 Chaque call analysé te rapproche du rang Gold","🔥 Les meilleurs SDR ne s'arrêtent jamais d'apprendre","🎯 Ton coach IA travaille pour toi en ce moment","⚡ Patience — la précision prend du temps","🏆 Bientôt un nouvel écusson peut-être ?"][Math.floor(Date.now() / 5000) % 5]}
       </div>
 
+      <style>{`
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+      `}</style>
     </div>
   );
 }
-
-// ── Coach Cinematic Loading ───────────────────────────────────────────────────
-const CINEMATIC_STEPS = [
-  { phase: 0.00, icon: "📞", msg: "Écoute du call en cours…",               sub: "Chargement du transcript",                color: "#00FFFB" },
-  { phase: 0.08, icon: "👂", msg: "Hmm… intéressant comme ouverture.",       sub: "Analyse de la posture et du ton",         color: "#00FFFB" },
-  { phase: 0.16, icon: "🤔", msg: "Attends… il a oublié de qualifier ça.",   sub: "Évaluation de la discovery",              color: V.orange  },
-  { phase: 0.24, icon: "📊", msg: "Calcul du ratio parole en cours…",        sub: "40% SDR / 60% prospect idéalement",       color: V.blue    },
-  { phase: 0.30, icon: "💡", msg: "Ah ! Bonne gestion de l'objection prix.", sub: "Analyse du pitch et des objections",      color: "#10B981" },
-  { phase: 0.38, icon: "📞", msg: "Le closing… voyons voir…",                sub: "Évaluation de l'engagement prospect",     color: V.orange  },
-  { phase: 0.45, icon: "⚡", msg: "L'énergie sur ce call est notable !",     sub: "Mesure de la conviction et du dynamisme", color: "#FFD700" },
-  { phase: 0.52, icon: "🎯", msg: "Identification des axes prioritaires…",   sub: "Croisement des 20 critères Vertuoza",     color: "#8B5CF6" },
-  { phase: 0.60, icon: "🧠", msg: "Génération des scripts experts…",         sub: "Formulations optimisées BTP en cours",    color: V.neon    },
-  { phase: 0.68, icon: "📝", msg: "Rédaction des plans de progression…",     sub: "Phrases types Vertuoza personnalisées",   color: V.blue    },
-  { phase: 0.76, icon: "🎓", msg: "Définition de tes 3 objectifs coach…",   sub: "Basé sur tes points les plus faibles",    color: V.orange  },
-  { phase: 0.84, icon: "🏆", msg: "Presque terminé — finalisation…",         sub: "Sauvegarde automatique en cours",         color: "#10B981" },
-  { phase: 0.92, icon: "✅", msg: "Analyse complète ! Résultats prêts.",     sub: "Ton coaching personnalisé est là",        color: "#FFD700" },
-];
-
-const MOTIVATIONS = [
-  "Les meilleurs SDR analysent chaque call. Tu fais partie de l'élite. 💪",
-  "Chaque analyse te rapproche du rang Gold. Continue comme ça ! 🏆",
-  "Un call analysé = un concurrent distancé. Belle mentalité. 🚀",
-  "Les données ne mentent pas. Tu vas progresser. 📈",
-  "Vertuoza + toi = la combinaison gagnante dans le BTP. 🔥",
-];
-
 
 // ── App principale ────────────────────────────────────────────────────────────
 export default function App() {
