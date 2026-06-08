@@ -1199,7 +1199,11 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
         {/* Logo + titre */}
         <div style={{ position: "relative", zIndex: 2, animation: "fadeInUp .8s ease both" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 40 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: V.blue, border: `2px solid ${V.neon}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 900, color: V.neon, boxShadow: `0 0 24px ${V.neon}30` }}>V</div>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: V.blue, border: `2px solid ${V.neon}50`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 24px ${V.neon}30`, padding: 10 }}>
+                <svg viewBox="0 0 997.25 837.77" style={{ width: "100%", height: "100%", filter: `brightness(0) saturate(100%) invert(93%) sepia(61%) saturate(400%) hue-rotate(130deg) brightness(105%)` }}>
+                  <path fillRule="evenodd" d="M601.88,792.79H411.19a62.11,62.11,0,0,1-62.11-62.11h0a62.11,62.11,0,0,1,62.11-62.11H601.88A62.11,62.11,0,0,1,664,730.68h0A62.11,62.11,0,0,1,601.88,792.79ZM578.62,523.13h0A62.11,62.11,0,0,0,516.51,461H320.82a62.11,62.11,0,0,0-62.11,62.11h0a62.11,62.11,0,0,0,62.11,62.11H516.51A62.11,62.11,0,0,0,578.62,523.13Zm182,0h0A62.12,62.12,0,0,0,698.55,461H667.44a62.11,62.11,0,0,0-62.11,62.11h0a62.11,62.11,0,0,0,62.11,62.11h31.11A62.12,62.12,0,0,0,760.67,523.13ZM870.4,315.18h0a62.12,62.12,0,0,0-62.11-62.12h-315a62.12,62.12,0,0,0-62.11,62.12h0a62.11,62.11,0,0,0,62.11,62.11h315A62.11,62.11,0,0,0,870.4,315.18Zm-466.38,0h0a62.11,62.11,0,0,0-62.11-62.12H210.85a62.12,62.12,0,0,0-62.12,62.12h0a62.12,62.12,0,0,0,62.12,62.11H341.91A62.11,62.11,0,0,0,404,315.18ZM637.26,107h0a62.1,62.1,0,0,0-62.11-62.11H107A62.11,62.11,0,0,0,44.91,107h0A62.11,62.11,0,0,0,107,169.1H575.15A62.11,62.11,0,0,0,637.26,107Zm315,.11h0A62.11,62.11,0,0,0,890.14,45H726.63a62.11,62.11,0,0,0-62.11,62.11h0a62.12,62.12,0,0,0,62.11,62.12H890.14A62.12,62.12,0,0,0,952.25,107.1Z"/>
+                </svg>
+              </div>
             <div>
               <div style={{ fontSize: 13, color: V.neon, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", marginBottom: 2 }}>Vertuoza</div>
               <div style={{ fontSize: 11, color: V.s4, letterSpacing: "2px", textTransform: "uppercase" }}>SDR Performance Platform</div>
@@ -1232,9 +1236,31 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
           </div>
 
           {/* Features pills */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 36 }}>
             {["🎯 Coach IA personnalisé", "🛡️ Badges & progression", "🃏 Carte SDR collector", "📊 Dashboard temps réel", "🏆 Leaderboard équipe", "🎬 Cinématique analyse"].map(f => (
               <div key={f} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 20, padding: "5px 12px", fontSize: 12, color: V.s5 }}>{f}</div>
+            ))}
+          </div>
+
+          {/* Live activity feed */}
+          <div style={{ background: "rgba(0,0,0,0.3)", border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 14, padding: "14px 16px", maxWidth: 420 }}>
+            <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: V.neon, display: "inline-block", animation: "pulse 1.5s ease-in-out infinite" }}/>
+              Activité en direct
+            </div>
+            {[
+              { time: "il y a 2min", event: "Julie a atteint le rang 🥈 Silver", color: "#C0C0C0" },
+              { time: "il y a 8min", event: "Maxime a validé l'objectif CLOSING", color: "#10B981" },
+              { time: "il y a 15min", event: "Thomas a analysé 3 calls aujourd'hui ✅", color: V.orange },
+              { time: "il y a 1h", event: "Sarah a débloqué l'écusson ⚔️ Trio du Jour", color: V.neon },
+            ].map((a, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", paddingBottom: i < 3 ? 8 : 0, marginBottom: i < 3 ? 8 : 0, borderBottom: i < 3 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: a.color, flexShrink: 0, marginTop: 5 }}/>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: V.white, lineHeight: 1.4 }}>{a.event}</div>
+                  <div style={{ fontSize: 10, color: V.s4, marginTop: 2 }}>{a.time}</div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
