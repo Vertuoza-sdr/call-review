@@ -6,7 +6,7 @@ import {
 } from "firebase/auth";
 import {
   collection, addDoc, query, where, orderBy,
-  onSnapshot, deleteDoc, doc, getDocs,
+  onSnapshot, deleteDoc, doc, getDocs, updateDoc, getDoc,
 } from "firebase/firestore";
 
 // ── Palette Vertuoza (sans dégradé) ──────────────────────────────────────────
@@ -937,9 +937,7 @@ export default function App() {
     if (!user) return;
     const checkAdmin = async () => {
       try {
-        const adminDoc = await import("firebase/firestore").then(({ getDoc, doc: fDoc }) =>
-          getDoc(fDoc(db, "admins", user.uid))
-        );
+        const adminDoc = await getDoc(doc(db, "admins", user.uid));
         setIsAdmin(adminDoc.exists());
       } catch { setIsAdmin(false); }
     };
@@ -1006,9 +1004,11 @@ export default function App() {
       const criterionScore = scores[o.criterionId] || 0;
       const validated = criterionScore >= 3;
       try {
-        await import("firebase/firestore").then(({ updateDoc, doc: fDoc }) =>
-          updateDoc(fDoc(db, "objectives", o.id), { status: validated ? "validated" : "failed", evaluatedAt: new Date(), evaluatedScore: criterionScore })
-        );
+        await updateDoc(doc(db, "objectives", o.id), {
+          status: validated ? "validated" : "failed",
+          evaluatedAt: new Date(),
+          evaluatedScore: criterionScore,
+        });
       } catch {}
     }
     // Sauvegarder les nouveaux objectifs
