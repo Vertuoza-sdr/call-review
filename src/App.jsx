@@ -88,6 +88,47 @@ const sectionPct = (section, scores) => {
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const DAILY_GOAL = 3;
 
+// ── Système de Séniorité & XP ─────────────────────────────────────────────────
+const LEVELS = [
+  { name: "Junior",  min: 0,    max: 499,  color: "#10B981", glow: "#10B98150", icon: "🟢", next: "Médior" },
+  { name: "Médior",  min: 500,  max: 1499, color: V.blue,    glow: "#003FDA50", icon: "🔵", next: "Senior" },
+  { name: "Senior",  min: 1500, max: 2999, color: "#8B5CF6", glow: "#8B5CF650", icon: "🟣", next: "Expert" },
+  { name: "Expert",  min: 3000, max: 9999, color: "#FFD700", glow: "#FFD70050", icon: "🟡", next: null },
+];
+
+const getLevel = (xp) => LEVELS.find(l => xp >= l.min && xp <= l.max) || LEVELS[0];
+
+const calcXP = (reviews, objectives) => {
+  let xp = 0;
+  xp += reviews.length * 50; // +50 par call analysé
+  xp += objectives.filter(o => o.status === "validated").length * 75; // +75 objectif validé
+  xp += reviews.filter(r => (r.globalPct||0) >= 80).length * 60; // +60 score ≥ 80%
+  xp += reviews.filter(r => (r.lucScore||0) >= 70).length * 40; // +40 LUC ≥ 70
+  // Bonus 3 calls/jour
+  const days = {};
+  reviews.forEach(r => {
+    if (!r.createdAt) return;
+    const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
+    const k = d.toISOString().slice(0,10);
+    days[k] = (days[k]||0)+1;
+  });
+  xp += Object.values(days).filter(v => v >= 3).length * 100;
+  return xp;
+};
+
+const calcLUC = (selfScores, coachScores) => {
+  const ids = Object.keys(coachScores).filter(id => (selfScores[id]??0) > 0 && (coachScores[id]??0) > 0);
+  if (!ids.length) return 0;
+  let pts = 0;
+  ids.forEach(id => {
+    const diff = Math.abs((coachScores[id]||0) - (selfScores[id]||0));
+    if (diff === 0) pts += 5;
+    else if (diff === 1) pts += (selfScores[id] < coachScores[id] ? 4 : 3);
+    else if (diff === 2) pts += (selfScores[id] < coachScores[id] ? 2 : 1);
+  });
+  return Math.round((pts / (ids.length * 5)) * 100);
+};
+
 // ── Badges écussons ───────────────────────────────────────────────────────────
 const BADGES = [
   { id: "first_call",    icon: "🛡️",  name: "Premier Call",       desc: "Premier call analysé",                 condition: (r,o) => r.length >= 1 },
@@ -101,7 +142,13 @@ const BADGES = [
   { id: "streak_3",      icon: "🔥",  name: "En Feu",             desc: "3 calls consécutifs en amélioration",  condition: (r,o) => { if(r.length<3)return false; const last3=r.slice(0,3).map(rv=>rv.globalPct||0); return last3[0]>last3[1]&&last3[1]>last3[2]; } },
   { id: "discovery_ace", icon: "🔍",  name: "Détective BTP",      desc: "Score Discovery ≥ 85% sur un call",    condition: (r,o) => r.some(rv=>sectionPct(CRITERIA[1],rv.scores||{})>=85) },
   { id: "week_warrior",  icon: "⚡",  name: "Guerrier de la Sem.", desc: "5 calls en une semaine",               condition: (r,o) => { const now=new Date(); return r.filter(rv=>{if(!rv.createdAt)return false;const d=rv.createdAt.toDate?rv.createdAt.toDate():new Date(rv.createdAt);return(now-d)<7*86400000;}).length>=5; } },
-  { id: "elite",         icon: "👑",  name: "Élite SDR",          desc: "Score ≥ 90% sur un call",              condition: (r,o) => r.some(rv=>(rv.globalPct||0)>=90) },
+  { id: "elite",         icon: "👑",  name: "Élite Sales",         desc: "Score ≥ 90% sur un call",              condition: (r,o) => r.some(rv=>(rv.globalPct||0)>=90) },
+  { id: "sniper",        icon: "🎯",  name: "Sniper",              desc: "Score LUC ≥ 80 sur un call",           condition: (r,o) => r.some(rv=>(rv.lucScore||0)>=80) },
+  { id: "oracle",        icon: "🧠",  name: "Oracle",              desc: "15+ critères alignés en un call",      condition: (r,o) => r.some(rv=>(rv.lucAligned||0)>=15) },
+  { id: "beat_prof",     icon: "🥊",  name: "Bat le Prof",         desc: "Score LUC ≥ 85 sur un call",           condition: (r,o) => r.some(rv=>(rv.lucScore||0)>=85) },
+  { id: "medior",        icon: "🔵",  name: "Médior",              desc: "500 XP atteints",                      condition: (r,o) => calcXP(r,o) >= 500 },
+  { id: "senior_badge",  icon: "🟣",  name: "Senior",              desc: "1500 XP atteints",                     condition: (r,o) => calcXP(r,o) >= 1500 },
+  { id: "expert_badge",  icon: "🟡",  name: "Expert",              desc: "3000 XP atteints",                     condition: (r,o) => calcXP(r,o) >= 3000 },
 ];
 
 // ── Stars display ─────────────────────────────────────────────────────────────
@@ -329,6 +376,17 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
   const bestCall = reviews.length ? Math.max(...reviews.map(r => r.globalPct || 0)) : 0;
   const trend = reviews.length >= 2 ? (reviews[0].globalPct||0) - (reviews[1].globalPct||0) : 0;
   const weekCalls = reviews.filter(r => { if (!r.createdAt) return false; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); return (new Date()-d) < 7*86400000; }).length;
+  const lucReviews = reviews.filter(r => r.lucScore != null);
+  const avgLuc = lucReviews.length ? Math.round(lucReviews.reduce((a,r)=>a+(r.lucScore||0),0)/lucReviews.length) : 0;
+  const myXpCard = calcXP(reviews, []);
+  const myLevelCard = getLevel(myXpCard);
+
+  const cardStats = [
+    { key: "OUV", val: getStat(0) }, { key: "DIS", val: getStat(1) },
+    { key: "PIT", val: getStat(2) }, { key: "CLO", val: getStat(3) },
+    { key: "LUC", val: avgLuc },
+    { key: "XP", val: Math.min(99, Math.round((myXpCard / 3000) * 99)) },
+  ];
 
   // Leaderboard cards from allReviews
   const teamCards = Object.values(
@@ -498,46 +556,45 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
               {/* ── ZONE BAS — nom + stats ── */}
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 4, padding: "10px 14px 12px" }}>
 
-                {/* Nom */}
-                <div style={{ marginBottom: 10 }}>
+                {/* Nom + niveau */}
+                <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: 20, fontWeight: 900, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "3px", lineHeight: 1, textShadow: `0 0 16px ${T.glow}80`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {name.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: 8, color: T.accent, letterSpacing: "2px", opacity: 0.7, marginTop: 3, textTransform: "uppercase" }}>Vertuoza · SDR</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                    <div style={{ fontSize: 7, color: T.accent, letterSpacing: "2px", opacity: 0.7, textTransform: "uppercase" }}>Vertuoza · Sales</div>
+                    <div style={{ background: `${myLevelCard.color}20`, border: `1px solid ${myLevelCard.color}50`, borderRadius: 10, padding: "1px 6px", fontSize: 7, fontWeight: 800, color: myLevelCard.color, letterSpacing: "0.5px" }}>
+                      {myLevelCard.icon} {myLevelCard.name.toUpperCase()}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Ligne séparatrice néon */}
-                <div style={{ height: 1, background: `linear-gradient(90deg,transparent,${T.glow},transparent)`, marginBottom: 10, opacity: 0.6 }}/>
+                <div style={{ height: 1, background: `linear-gradient(90deg,transparent,${T.glow},transparent)`, marginBottom: 8, opacity: 0.6 }}/>
 
-                {/* Stats avec barres néon */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px" }}>
-                  {[
-                    { key: "OUV", sIdx: 0 }, { key: "CLO", sIdx: 3 },
-                    { key: "DIS", sIdx: 1 }, { key: "PIT", sIdx: 2 },
-                  ].map(s => {
-                    const val = getStat(s.sIdx);
-                    return (
-                      <div key={s.key}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                          <span style={{ fontSize: 9, color: T.accent, fontWeight: 700, letterSpacing: "1px" }}>{s.key}</span>
-                          <span style={{ fontSize: 9, fontWeight: 900, color: "#fff" }}>{val}%</span>
-                        </div>
-                        <div style={{ height: 3, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${val}%`, background: `linear-gradient(90deg,${T.glow}80,${T.accent})`, borderRadius: 2, boxShadow: `0 0 6px ${T.glow}` }}/>
-                        </div>
+                {/* Stats 3x2 avec LUC et XP */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px 8px" }}>
+                  {cardStats.map(s => (
+                    <div key={s.key}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                        <span style={{ fontSize: 8, color: s.key === "LUC" ? "#8B5CF6" : s.key === "XP" ? "#FFD700" : T.accent, fontWeight: 700, letterSpacing: "0.5px" }}>{s.key}</span>
+                        <span style={{ fontSize: 8, fontWeight: 900, color: "#fff" }}>{s.val}</span>
                       </div>
-                    );
-                  })}
+                      <div style={{ height: 2, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${s.val}%`, background: s.key === "LUC" ? "#8B5CF6" : s.key === "XP" ? "#FFD700" : T.accent, borderRadius: 2 }}/>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Footer pills */}
-                <div style={{ display: "flex", gap: 6, marginTop: 10, justifyContent: "center" }}>
+                <div style={{ display: "flex", gap: 4, marginTop: 8, justifyContent: "center" }}>
                   {[
                     { label: `${totalCalls} calls`, icon: "🎙️" },
-                    { label: `Best ${bestCall}%`, icon: "⭐" },
+                    { label: `LUC ${avgLuc}`, icon: "🧠" },
                     { label: trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : "Stable", icon: trend > 0 ? "↗" : trend < 0 ? "↘" : "→" },
                   ].map(p => (
-                    <div key={p.label} style={{ background: `${T.glow}15`, border: `1px solid ${T.glow}30`, borderRadius: 20, padding: "2px 8px", fontSize: 8, color: T.accent, fontWeight: 600, display: "flex", gap: 3, alignItems: "center" }}>
+                    <div key={p.label} style={{ background: `${T.glow}15`, border: `1px solid ${T.glow}30`, borderRadius: 20, padding: "2px 7px", fontSize: 8, color: T.accent, fontWeight: 600, display: "flex", gap: 3, alignItems: "center" }}>
                       <span>{p.icon}</span><span>{p.label}</span>
                     </div>
                   ))}
@@ -902,6 +959,108 @@ function CoachCinematic() {
   );
 }
 
+// ── XP Level Floating Widget ─────────────────────────────────────────────────
+function XPWidget({ xp, reviews, objectives }) {
+  const [expanded, setExpanded] = useState(false);
+  const [prevXp, setPrevXp] = useState(xp);
+  const [gainAnim, setGainAnim] = useState(null);
+
+  const level = getLevel(xp);
+  const nextLevel = LEVELS.find(l => l.min > xp);
+  const progress = nextLevel
+    ? ((xp - level.min) / (level.max - level.min + 1)) * 100
+    : 100;
+  const isNearNext = nextLevel && (nextLevel.min - xp) <= 100;
+  const circumference = 2 * Math.PI * 22;
+
+  useEffect(() => {
+    if (xp > prevXp) {
+      setGainAnim(`+${xp - prevXp} XP`);
+      setTimeout(() => setGainAnim(null), 2000);
+    }
+    setPrevXp(xp);
+  }, [xp]);
+
+  const xpBreakdown = [
+    { label: "Calls analysés", value: reviews.length, xp: reviews.length * 50, icon: "🎙️" },
+    { label: "Objectifs validés", value: objectives.filter(o=>o.status==="validated").length, xp: objectives.filter(o=>o.status==="validated").length * 75, icon: "✅" },
+    { label: "Scores ≥ 80%", value: reviews.filter(r=>(r.globalPct||0)>=80).length, xp: reviews.filter(r=>(r.globalPct||0)>=80).length * 60, icon: "⭐" },
+    { label: "LUC ≥ 70", value: reviews.filter(r=>(r.lucScore||0)>=70).length, xp: reviews.filter(r=>(r.lucScore||0)>=70).length * 40, icon: "🧠" },
+  ];
+
+  return (
+    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 999, fontFamily: "'Gantari',sans-serif" }}>
+      {/* XP gain animation */}
+      {gainAnim && (
+        <div style={{ position: "absolute", bottom: 80, right: 0, fontSize: 14, fontWeight: 800, color: level.color, animation: "floatUp 2s ease forwards", pointerEvents: "none", whiteSpace: "nowrap" }}>
+          {gainAnim}
+        </div>
+      )}
+
+      {/* Expanded panel */}
+      {expanded && (
+        <div style={{ position: "absolute", bottom: 80, right: 0, width: 280, background: V.s1, border: `1px solid ${level.color}40`, borderRadius: 16, padding: 20, boxShadow: `0 8px 40px ${level.color}20`, animation: "fadeInUp .2s ease" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <div style={{ fontSize: 24 }}>{level.icon}</div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: level.color }}>{level.name}</div>
+              <div style={{ fontSize: 11, color: V.s5 }}>{xp} XP total</div>
+            </div>
+            {nextLevel && (
+              <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                <div style={{ fontSize: 11, color: V.s5 }}>Prochain</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: nextLevel.color }}>{nextLevel.name}</div>
+                <div style={{ fontSize: 10, color: V.s4 }}>{nextLevel.min - xp} XP restants</div>
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ height: "100%", width: `${progress}%`, background: level.color, borderRadius: 10, transition: "width .5s ease", boxShadow: `0 0 8px ${level.color}` }}/>
+          </div>
+
+          {/* XP breakdown */}
+          <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>Sources d'XP</div>
+          {xpBreakdown.map(b => (
+            <div key={b.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 12 }}>{b.icon}</span>
+              <span style={{ fontSize: 11, color: V.s5, flex: 1 }}>{b.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: level.color }}>+{b.xp} XP</span>
+            </div>
+          ))}
+
+          {isNearNext && nextLevel && (
+            <div style={{ marginTop: 12, background: `${V.orange}15`, border: `1px solid ${V.orange}30`, borderRadius: 8, padding: "8px 12px", fontSize: 11, color: V.orange, fontWeight: 600, textAlign: "center" }}>
+              🔥 Plus que {nextLevel.min - xp} XP pour devenir {nextLevel.name} !
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Main button */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        style={{ width: 64, height: 64, borderRadius: "50%", background: V.s1, border: `2px solid ${level.color}${isNearNext ? "" : "60"}`, cursor: "pointer", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 ${isNearNext ? "24px" : "12px"} ${level.glow}`, animation: isNearNext ? "pulse 1.5s ease-in-out infinite" : "none", transition: "box-shadow .3s", padding: 0 }}
+      >
+        {/* Circular progress */}
+        <svg width={64} height={64} style={{ position: "absolute", top: 0, left: 0, transform: "rotate(-90deg)" }}>
+          <circle cx={32} cy={32} r={22} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4}/>
+          <circle cx={32} cy={32} r={22} fill="none" stroke={level.color} strokeWidth={4}
+            strokeLinecap="round" strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - progress/100)}
+            style={{ transition: "stroke-dashoffset .5s ease" }}/>
+        </svg>
+        {/* Level icon */}
+        <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+          <div style={{ fontSize: 18, lineHeight: 1 }}>{level.icon}</div>
+          <div style={{ fontSize: 8, fontWeight: 800, color: level.color, letterSpacing: "0.5px" }}>{level.name.toUpperCase().slice(0,3)}</div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
 // ── App principale ────────────────────────────────────────────────────────────
 export default function App() {
   const [user, setUser] = useState(null);
@@ -998,6 +1157,8 @@ export default function App() {
   // Save automatique après analyse
   const autoSave = async (r1, r2, r3, pct, selfAnalysisComment) => {
     if (!user) return;
+    const lucScore = selfDone ? calcLUC(selfScores, r1.scores || {}) : null;
+    const lucAligned = selfDone ? Object.keys(r1.scores||{}).filter(id => r1.scores[id] === (selfScores[id]||0)).length : null;
     try {
       await addDoc(collection(db, "reviews"), {
         userId: user.uid, userEmail: user.email,
@@ -1011,6 +1172,7 @@ export default function App() {
         selfScores: selfDone ? selfScores : null,
         selfComment: selfDone ? selfComment : null,
         selfAnalysisComment: selfAnalysisComment || null,
+        lucScore, lucAligned,
         globalPct: pct, createdAt: new Date(),
       });
     } catch (e) { console.error("Autosave error", e); }
@@ -1143,6 +1305,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
   const medal = getMedal(globalPct);
   const myAvg = reviews.length ? Math.round(reviews.reduce((a, r) => a + (r.globalPct || 0), 0) / reviews.length) : 0;
   const myMedal = getMedal(myAvg);
+  const myXP = calcXP(reviews, objectives);
+  const myLevel = getLevel(myXP);
   const pendingObjectives = objectives.filter(o => o.status === "pending");
   const todayReviews = reviews.filter(r => {
     if (!r.createdAt) return false;
@@ -2488,6 +2652,9 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           </>);
         })()}
       </div>
+
+      {/* XP Level Widget — always visible */}
+      <XPWidget xp={myXP} reviews={reviews} objectives={objectives}/>
     </div>
   );
 }
