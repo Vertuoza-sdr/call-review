@@ -918,6 +918,12 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedSdr, setSelectedSdr] = useState(null); // for admin view
   const [saveStatus, setSaveStatus] = useState(""); const [reviewTab, setReviewTab] = useState("review");
+
+  // Autoévaluation SDR
+  const [selfScores, setSelfScores] = useState({});
+  const [selfComment, setSelfComment] = useState({ strengths: "", weaknesses: "", feeling: "" });
+  const [selfDone, setSelfDone] = useState(false);
+  const [newStep, setNewStep] = useState("transcript"); // transcript | selfeval
   const [transcript, setTranscript] = useState("");
   const [scores, setScores] = useState({}); const [justifications, setJustifications] = useState({});
   const [expertScripts, setExpertScripts] = useState({}); const [levelUp, setLevelUp] = useState({});
@@ -990,7 +996,7 @@ export default function App() {
   };
 
   // Save automatique après analyse
-  const autoSave = async (r1, r2, r3, pct) => {
+  const autoSave = async (r1, r2, r3, pct, selfAnalysisComment) => {
     if (!user) return;
     try {
       await addDoc(collection(db, "reviews"), {
@@ -1002,6 +1008,9 @@ export default function App() {
         globalComment: r1.globalComment || "",
         globalStrengths: r1.globalStrengths || [],
         globalImprovements: r1.globalImprovements || [],
+        selfScores: selfDone ? selfScores : null,
+        selfComment: selfDone ? selfComment : null,
+        selfAnalysisComment: selfAnalysisComment || null,
         globalPct: pct, createdAt: new Date(),
       });
     } catch (e) { console.error("Autosave error", e); }
@@ -1060,43 +1069,60 @@ export default function App() {
 
   const handleAnalyze = async () => {
     if (!transcript.trim()) return;
-    setLoading(true); setPage("review"); setReviewTab("review");
+    setLoading(true); setPage("review"); setReviewTab("mirror");
     setScores({}); setJustifications({}); setExpertScripts({}); setLevelUp({}); setGlobalComment("");
 
-    const p1 = `Tu es un directeur commercial senior spécialisé SaaS BTP. Tu analyses des calls SDR pour Vertuoza — logiciel tout-en-un pour le bâtiment (devis, facturation, planning, chantier, RH).
-Retourne UNIQUEMENT du JSON valide sans markdown :
-{"scores":{"tone":2,"rapport":2,"rhythm":2,"opening":2,"flow":2,"talkratio":2,"structure":2,"tools":2,"decision":2,"timing":2,"quantify":2,"objections":2,"sector":2,"trade":2,"vocab":2,"cases":2,"benefits":2,"control":2,"commitment":2,"energy":2},"justifications":{"tone":"analyse précise + recommandation actionnnable","rapport":"...","rhythm":"...","opening":"...","flow":"...","talkratio":"...","structure":"...","tools":"...","decision":"...","timing":"...","quantify":"...","objections":"...","sector":"...","trade":"...","vocab":"...","cases":"...","benefits":"...","control":"...","commitment":"...","energy":"..."},"globalComment":"Verdict global 4-5 phrases : profil SDR, forces, angles morts, verdict.","globalStrengths":["Force 1 avec exemple concret","Force 2","Force 3"],"globalImprovements":["Axe 1 prioritaire","Axe 2","Axe 3"]}
-Scores : 1=manquant, 2=partiel, 3=bon, 4=excellent. Sois précis, direct, exigeant. Cite des éléments réels.`;
+    const selfEvalContext = selfDone && Object.keys(selfScores).length > 0
+      ? `\n\nAUTOÉVALUATION DU SDR (ses propres notes) :\n${JSON.stringify(selfScores)}\n\nCe qu'il pense avoir bien fait : "${selfComment.strengths}"\nCe qu'il pense avoir raté : "${selfComment.weaknesses}"\nRessentis général : "${selfComment.feeling}"`
+      : "";
 
-    const p2 = `Tu es un top SDR Vertuoza 5 ans BTP. Pour chaque critère, écris la formulation exacte que tu aurais dite dans CE call.
+    const p1 = `Tu es Marc, coach commercial senior chez Vertuoza avec 12 ans d'expérience dans la vente terrain BTP. Tu as toi-même été SDR, manager, puis directeur commercial. Tu analyses des calls de tes SDRs comme un mentor qui connaît chaque artisan du secteur par cœur.
+
+Ton style : direct, humain, jamais condescendant. Tu parles comme un vrai coach — tu cites des moments précis du call, tu utilises le "tu", tu vas à l'essentiel. Pas de jargon corporate, pas de bullet points vides. Quand c'est bien, tu le dis franchement. Quand c'est raté, tu expliques exactement pourquoi avec des exemples concrets tirés du transcript.
+
+Tu connais Vertuoza sur le bout des doigts : logiciel de gestion tout-en-un pour les entreprises du bâtiment (devis, facturation, planning chantier, RH, comptabilité). Tu sais qu'un électricien de 8 personnes n'a pas les mêmes douleurs qu'un maçon de 25, et tu adaptes toujours tes retours au contexte du prospect.
+
+Retourne UNIQUEMENT du JSON valide sans markdown :
+{
+  "scores": {"tone":2,"rapport":2,"rhythm":2,"opening":2,"flow":2,"talkratio":2,"structure":2,"tools":2,"decision":2,"timing":2,"quantify":2,"objections":2,"sector":2,"trade":2,"vocab":2,"cases":2,"benefits":2,"control":2,"commitment":2,"energy":2},
+  "justifications": {
+    "tone": "Commentaire direct et humain sur CE qui s'est passé. Cite un moment précis du transcript si possible. Parle au SDR comme un coach parlerait à son joueur — 'Là tu as fait X, c'est bien parce que... / le problème c'est que...' Max 3 phrases percutantes.",
+    "rapport": "...", "rhythm": "...", "opening": "...", "flow": "...", "talkratio": "...",
+    "structure": "...", "tools": "...", "decision": "...", "timing": "...", "quantify": "...",
+    "objections": "...", "sector": "...", "trade": "...", "vocab": "...", "cases": "...",
+    "benefits": "...", "control": "...", "commitment": "...", "energy": "..."
+  },
+  "globalComment": "Verdict coach en 4-5 phrases — comme si tu parlais à ton SDR après le call. Commence par un point fort sincère, puis l'angle mort principal, puis ce sur quoi tu vas travailler ensemble. Ton humain, pas corporate.",
+  "globalStrengths": ["Force concrète observée dans ce call", "Force 2", "Force 3"],
+  "globalImprovements": ["Ce qu'on travaille en priorité", "Axe 2", "Axe 3"],
+  "selfAnalysisComment": "Si une autoévaluation SDR est fournie : compare les notes SDR vs tes notes. Dis-lui où il se voit trop bien (angles morts), où il se sous-estime (manque de confiance), et où il est lucide. Parle-lui directement — 'Tu t'es donné 4 sur le closing alors que...' / 'Par contre tu avais raison de noter 2 sur...' Si pas d'autoéval, retourne null."
+}
+Scores : 1=absent, 2=insuffisant, 3=correct, 4=maîtrisé. Exigeant mais juste.`;
+
+    const p2 = `Tu es Marc, le même coach. Pour chaque critère, écris exactement ce que tu aurais dit à la place du SDR dans CE call précis. Pas un script générique — une vraie phrase ancrée dans le contexte du prospect, son métier, ses douleurs identifiées dans le transcript.
+
 Retourne UNIQUEMENT du JSON valide sans markdown :
 {"tone":"...","rapport":"...","rhythm":"...","opening":"...","flow":"...","talkratio":"...","structure":"...","tools":"...","decision":"...","timing":"...","quantify":"...","objections":"...","sector":"...","trade":"...","vocab":"...","cases":"...","benefits":"...","control":"...","commitment":"...","energy":"..."}
-1-3 phrases max, naturel, ancré dans le contexte du call.`;
 
-    const p3 = `Tu es un coach commercial expert BTP. Pour chaque critère, donne ce qu'il faut faire pour progresser + 2-3 phrases types réutilisables dans n'importe quel call Vertuoza.
-Retourne UNIQUEMENT du JSON valide sans markdown :
-{"tone":{"tip":"ce qu'il faut changer","scripts":["phrase type 1","phrase type 2"]},"rapport":{"tip":"...","scripts":["...","..."]},"rhythm":{"tip":"...","scripts":["...","..."]},"opening":{"tip":"...","scripts":["...","...","..."]},"flow":{"tip":"...","scripts":["...","..."]},"talkratio":{"tip":"...","scripts":["...","..."]},"structure":{"tip":"...","scripts":["...","...","..."]},"tools":{"tip":"...","scripts":["...","...","..."]},"decision":{"tip":"...","scripts":["...","..."]},"timing":{"tip":"...","scripts":["...","...","..."]},"quantify":{"tip":"...","scripts":["...","...","..."]},"objections":{"tip":"...","scripts":["...","...","..."]},"sector":{"tip":"...","scripts":["...","..."]},"trade":{"tip":"...","scripts":["...","..."]},"vocab":{"tip":"...","scripts":["...","..."]},"cases":{"tip":"...","scripts":["...","...","..."]},"benefits":{"tip":"...","scripts":["...","...","..."]},"control":{"tip":"...","scripts":["...","..."]},"commitment":{"tip":"...","scripts":["...","...","..."]},"energy":{"tip":"...","scripts":["...","..."]}}`;
+1-3 phrases max. Naturel, humain, professionnel. Utilise le prénom du prospect si identifiable. Vocabulaire BTP concret.`;
 
-    const p4 = `Tu es un coach SDR expert Vertuoza. Après avoir analysé ce call, génère 3 objectifs précis et actionnables pour le PROCHAIN call du SDR.
+    const p3 = `Tu es Marc, le coach. Pour chaque critère, donne une explication courte de ce qu'il faut changer + 2-3 phrases types à réutiliser. Les phrases doivent sonner comme de vraies phrases de call — pas des templates robotiques.
+
 Retourne UNIQUEMENT du JSON valide sans markdown :
-[
-  {
-    "title": "Titre court de l'objectif (max 8 mots)",
-    "description": "Description précise de ce qu'il doit faire différemment au prochain call. 1-2 phrases max. Ancré dans le contexte Vertuoza BTP.",
-    "criterionId": "ID du critère concerné parmi : tone,rapport,rhythm,opening,flow,talkratio,structure,tools,decision,timing,quantify,objections,sector,trade,vocab,cases,benefits,control,commitment,energy",
-    "criterionLabel": "Nom lisible du critère",
-    "priority": "high|medium|low",
-    "example": "Exemple de phrase concrète à utiliser dans le prochain call"
-  }
-]
-Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et actionnable.`;
+{"tone":{"tip":"Ce qu'il faut concrètement changer — 1 phrase directe.","scripts":["Phrase naturelle 1","Phrase naturelle 2"]},"rapport":{"tip":"...","scripts":["...","..."]},"rhythm":{"tip":"...","scripts":["...","..."]},"opening":{"tip":"...","scripts":["...","...","..."]},"flow":{"tip":"...","scripts":["...","..."]},"talkratio":{"tip":"...","scripts":["...","..."]},"structure":{"tip":"...","scripts":["...","...","..."]},"tools":{"tip":"...","scripts":["...","...","..."]},"decision":{"tip":"...","scripts":["...","..."]},"timing":{"tip":"...","scripts":["...","...","..."]},"quantify":{"tip":"...","scripts":["...","...","..."]},"objections":{"tip":"...","scripts":["...","...","..."]},"sector":{"tip":"...","scripts":["...","..."]},"trade":{"tip":"...","scripts":["...","..."]},"vocab":{"tip":"...","scripts":["...","..."]},"cases":{"tip":"...","scripts":["...","...","..."]},"benefits":{"tip":"...","scripts":["...","...","..."]},"control":{"tip":"...","scripts":["...","..."]},"commitment":{"tip":"...","scripts":["...","...","..."]},"energy":{"tip":"...","scripts":["...","..."]}}`;
+
+    const p4 = `Tu es Marc, le coach. Génère 3 objectifs très précis pour le prochain call — basés sur les 3 plus gros points faibles. Chaque objectif doit être mesurable et formulé comme une mission concrète, pas un conseil vague.
+
+Retourne UNIQUEMENT du JSON valide sans markdown :
+[{"title":"Mission courte (max 6 mots)","description":"Ce que le SDR doit faire différemment — formulé comme une instruction précise de coach. 1-2 phrases max.","criterionId":"ID parmi: tone,rapport,rhythm,opening,flow,talkratio,structure,tools,decision,timing,quantify,objections,sector,trade,vocab,cases,benefits,control,commitment,energy","criterionLabel":"Nom lisible","priority":"high|medium|low","example":"Phrase exacte à prononcer dans le prochain call"}]
+3 objectifs max. Ultra-concrets. Pas de généralités.`;
 
     try {
       const [r1, r2, r3, r4] = await Promise.all([
-        callAPI(p1, `Transcript :\n\n${transcript}`, 5000),
-        callAPI(p2, `Transcript :\n\n${transcript}`, 4000),
-        callAPI(p3, `Transcript :\n\n${transcript}`, 5000),
-        callAPI(p4, `Transcript :\n\n${transcript}`, 3000),
+        callAPI(p1, `Transcript du call :\n\n${transcript}${selfEvalContext}`, 5000),
+        callAPI(p2, `Transcript du call :\n\n${transcript}`, 4000),
+        callAPI(p3, `Transcript du call :\n\n${transcript}`, 5000),
+        callAPI(p4, `Transcript du call :\n\n${transcript}`, 3000),
       ]);
       const pct = calcPct(r1.scores || {});
       setScores(r1.scores || {}); setJustifications(r1.justifications || {});
@@ -1104,7 +1130,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
       setGlobalStrengths(r1.globalStrengths || []);
       setGlobalImprovements(r1.globalImprovements || []);
       setExpertScripts(r2 || {}); setLevelUp(r3 || {});
-      await autoSave(r1, r2, r3, pct);
+      await autoSave(r1, r2, r3, pct, r1.selfAnalysisComment);
       await saveObjectives(Array.isArray(r4) ? r4 : [], r1.scores || {});
       setSaveStatus("saved");
     } catch (e) { setGlobalComment("❌ Erreur : " + e.message); }
@@ -1548,35 +1574,125 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
 
         {/* ══ NOUVEAU CALL ════════════════════════════════════════════════════════ */}
         {page === "new" && (<>
-          <div style={card()}>
-            <span style={sLabel}>Infos du call</span>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <input placeholder="Nom du prospect" value={meta.prospect} onChange={e => setMeta({...meta, prospect: e.target.value})} style={inputStyle}/>
-              <input placeholder="Date (ex: 08/06/2026)" value={meta.date} onChange={e => setMeta({...meta, date: e.target.value})} style={inputStyle}/>
+
+          {/* Étapes visuelles */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 24 }}>
+            {[["1","Transcript","transcript"],["2","Autoévaluation","selfeval"]].map(([num,lbl,step],i) => (
+              <div key={step} style={{ display: "flex", alignItems: "center", flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: newStep === step ? V.orange : newStep === "selfeval" && step === "transcript" ? "#10B981" : "rgba(255,255,255,0.1)", border: `2px solid ${newStep === step ? V.orange : newStep === "selfeval" && step === "transcript" ? "#10B981" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: V.white, transition: "all .3s" }}>
+                    {newStep === "selfeval" && step === "transcript" ? "✓" : num}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: newStep === step ? V.orange : V.s5 }}>{lbl}</span>
+                </div>
+                {i === 0 && <div style={{ flex: 1, height: 2, background: newStep === "selfeval" ? "#10B981" : "rgba(255,255,255,0.1)", margin: "0 12px", transition: "background .3s" }}/>}
+              </div>
+            ))}
+          </div>
+
+          {/* ── ÉTAPE 1 : Transcript ── */}
+          {newStep === "transcript" && (<>
+            <div style={card()}>
+              <span style={sLabel}>Infos du call</span>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <input placeholder="Nom du prospect" value={meta.prospect} onChange={e => setMeta({...meta, prospect: e.target.value})} style={inputStyle}/>
+                <input placeholder="Date (ex: 08/06/2026)" value={meta.date} onChange={e => setMeta({...meta, date: e.target.value})} style={inputStyle}/>
+              </div>
             </div>
-          </div>
-
-          <div style={card()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <span style={sLabel}>Transcript du call</span>
-              <button onClick={() => txtRef.current.click()} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 12, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>📁 Importer .txt</button>
-              <input ref={txtRef} type="file" accept=".txt,.md" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setTranscript(ev.target.result); r.readAsText(f); }}/>
+            <div style={card()}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <span style={sLabel}>Transcript du call</span>
+                <button onClick={() => txtRef.current.click()} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 12, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>📁 Importer .txt</button>
+                <input ref={txtRef} type="file" accept=".txt,.md" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setTranscript(ev.target.result); r.readAsText(f); }}/>
+              </div>
+              <textarea value={transcript} onChange={e => setTranscript(e.target.value)}
+                placeholder={"Colle le transcript ici...\n\nSDR: Bonjour Marc, c'est Julie de Vertuoza...\nPROSPECT: Oui bonjour..."}
+                style={{ ...inputStyle, minHeight: 300, fontFamily: "monospace", resize: "vertical", lineHeight: 1.7 }}/>
+              {transcript && <div style={{ marginTop: 8, fontSize: 11, color: V.s5 }}>📝 {transcript.split(" ").length} mots · ~{Math.ceil(transcript.split(" ").length / 130)} min de call</div>}
             </div>
-            <textarea value={transcript} onChange={e => setTranscript(e.target.value)}
-              placeholder={"Colle le transcript ici...\n\nSDR: Bonjour Marc, c'est Julie de Vertuoza...\nPROSPECT: Oui bonjour..."}
-              style={{ ...inputStyle, minHeight: 300, fontFamily: "monospace", resize: "vertical", lineHeight: 1.7 }}/>
-            {transcript && <div style={{ marginTop: 8, fontSize: 11, color: V.s5 }}>📝 {transcript.split(" ").length} mots · ~{Math.ceil(transcript.split(" ").length / 130)} min de call</div>}
-          </div>
+            <div style={{ ...card(), padding: "14px 18px", marginBottom: 14 }}>
+              <DailyCounter count={todayReviews}/>
+            </div>
+            <button onClick={() => { if (!transcript.trim()) return; setSelfScores({}); setSelfComment({ strengths: "", weaknesses: "", feeling: "" }); setNewStep("selfeval"); }}
+              disabled={!transcript.trim()}
+              style={{ width: "100%", background: !transcript.trim() ? "rgba(255,255,255,0.08)" : V.blue, border: "none", borderRadius: 14, color: !transcript.trim() ? V.s4 : V.white, fontSize: 15, fontWeight: 700, padding: "16px", cursor: !transcript.trim() ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .3s" }}>
+              Suivant — Autoévaluation →
+            </button>
+          </>)}
 
-          {/* Objectif du jour */}
-          <div style={{ ...card(), padding: "14px 18px", marginBottom: 14 }}>
-            <DailyCounter count={todayReviews}/>
-          </div>
+          {/* ── ÉTAPE 2 : Autoévaluation ── */}
+          {newStep === "selfeval" && (<>
+            <div style={card()}>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: V.white, marginBottom: 6 }}>🙋 Comment tu évalues ton call ?</div>
+                <div style={{ fontSize: 13, color: V.s5, lineHeight: 1.6 }}>Avant de voir l'analyse du coach, prends 2 minutes pour te noter honnêtement. C'est pour toi — plus tu es lucide, plus le feedback sera utile.</div>
+              </div>
 
-          <button onClick={handleAnalyze} disabled={loading || !transcript.trim()} style={{ width: "100%", background: (loading || !transcript.trim()) ? "rgba(255,255,255,0.08)" : V.orange, border: "none", borderRadius: 14, color: (loading || !transcript.trim()) ? V.s4 : V.white, fontSize: 15, fontWeight: 700, padding: "16px", cursor: (loading || !transcript.trim()) ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .3s" }}>
-            {loading ? "⏳ Analyse en cours — 3 IAs en parallèle…" : "🚀 Analyser le Call — Sauvegarde automatique"}
-          </button>
-          <div style={{ textAlign: "center", marginTop: 8, fontSize: 11, color: V.s4 }}>✅ La review sera sauvegardée automatiquement après l'analyse</div>
+              {/* Notes par section */}
+              {CRITERIA.map(section => (
+                <div key={section.section} style={{ marginBottom: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 16 }}>{section.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: section.color, textTransform: "uppercase", letterSpacing: "1px" }}>{section.section}</span>
+                  </div>
+                  {section.items.map(c => (
+                    <div key={c.id} style={{ marginBottom: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: V.white }}>{c.label}</span>
+                        <div style={{ display: "flex", gap: 4 }}>
+                          {SCORES.map(s => (
+                            <button key={s.value} onClick={() => setSelfScores(prev => ({...prev, [c.id]: s.value}))}
+                              style={{ background: selfScores[c.id] === s.value ? s.color : "rgba(255,255,255,0.06)", border: `1.5px solid ${selfScores[c.id] === s.value ? s.color : "rgba(255,255,255,0.12)"}`, color: selfScores[c.id] === s.value ? "#fff" : V.s5, borderRadius: 20, padding: "3px 10px", fontSize: 10, fontFamily: "inherit", cursor: "pointer", fontWeight: selfScores[c.id] === s.value ? 700 : 400, transition: "all .15s", whiteSpace: "nowrap" }}>
+                              {s.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Ressenti global */}
+            <div style={card()}>
+              <span style={sLabel}>💬 Ton ressenti sur ce call</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>✅ Ce que tu penses avoir bien fait</div>
+                  <textarea value={selfComment.strengths} onChange={e => setSelfComment(p => ({...p, strengths: e.target.value}))}
+                    placeholder="Ex: J'ai bien qualifié la taille de l'entreprise, j'ai utilisé le bon vocabulaire bâtiment..."
+                    style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.6 }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>⚠️ Ce que tu aurais dû faire différemment</div>
+                  <textarea value={selfComment.weaknesses} onChange={e => setSelfComment(p => ({...p, weaknesses: e.target.value}))}
+                    placeholder="Ex: J'ai été trop rapide sur le pitch, je n'ai pas quantifié le problème en euros..."
+                    style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.6 }}/>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>🎯 Ressenti général sur ce call</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {[["🔥","En feu"],["😊","Solide"],["😐","Moyen"],["😤","Frustrant"],["💪","À améliorer"]].map(([emoji,label]) => (
+                      <button key={label} onClick={() => setSelfComment(p => ({...p, feeling: label}))}
+                        style={{ background: selfComment.feeling === label ? `${V.orange}20` : "rgba(255,255,255,0.05)", border: `1.5px solid ${selfComment.feeling === label ? V.orange : "rgba(255,255,255,0.1)"}`, borderRadius: 20, padding: "6px 14px", fontSize: 12, color: selfComment.feeling === label ? V.orange : V.s5, cursor: "pointer", fontFamily: "inherit", fontWeight: selfComment.feeling === label ? 700 : 400, transition: "all .2s" }}>
+                        {emoji} {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setNewStep("transcript")} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 12, color: V.s5, fontSize: 14, fontWeight: 600, padding: "14px 20px", cursor: "pointer", fontFamily: "inherit" }}>← Retour</button>
+              <button onClick={() => { setSelfDone(true); handleAnalyze(); }}
+                style={{ flex: 1, background: V.orange, border: "none", borderRadius: 12, color: V.white, fontSize: 15, fontWeight: 700, padding: "14px", cursor: "pointer", fontFamily: "inherit" }}>
+                🚀 Lancer l'analyse du coach
+              </button>
+            </div>
+            <div style={{ textAlign: "center", marginTop: 8, fontSize: 11, color: V.s4 }}>✅ Sauvegarde automatique · Résultats en ~30 secondes</div>
+          </>)}
         </>)}
 
         {/* ══ REVIEW ══════════════════════════════════════════════════════════════ */}
@@ -1584,7 +1700,7 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
           {loading && <CoachCinematic/>}
           {!loading && (<>
             <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-              {[["review","🎯 Critères"],["summary","📊 Synthèse"]].map(([id,lbl]) => (
+              {[["mirror","🪞 Miroir"],["review","🎯 Critères"],["summary","📊 Synthèse"]].map(([id,lbl]) => (
                 <button key={id} onClick={() => setReviewTab(id)} style={{ flex: 1, padding: "10px", background: reviewTab === id ? V.blue : "rgba(255,255,255,0.05)", border: `1.5px solid ${reviewTab === id ? V.blue : V.border}`, borderRadius: 10, color: reviewTab === id ? V.white : V.s5, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{lbl}</button>
               ))}
             </div>
@@ -1604,6 +1720,118 @@ Choisis les 3 critères avec les scores les plus faibles. Sois ultra-précis et 
                 </div>
               )}
             </div>
+
+            {reviewTab === "mirror" && (<>
+              {!selfDone ? (
+                <div style={{ ...card(), textAlign: "center", padding: 40 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🪞</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: V.white, marginBottom: 8 }}>Aucune autoévaluation pour ce call</div>
+                  <div style={{ fontSize: 13, color: V.s5 }}>L'autoévaluation était optionnelle pour ce call. Dès le prochain, elle sera obligatoire et tu pourras voir la confrontation ici.</div>
+                </div>
+              ) : (<>
+                {/* Commentaire IA sur l'autoéval */}
+                {globalComment && (
+                  <div style={{ ...card(), background: "rgba(0,63,218,0.08)", border: `1px solid ${V.blue}30`, borderLeft: `3px solid ${V.neon}` }}>
+                    <div style={{ fontSize: 11, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>🧠 Marc analyse ton autoévaluation</div>
+                    <p style={{ color: V.bg1, fontSize: 13.5, lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
+                      {/* selfAnalysisComment stored in globalComment for now — separate field in production */}
+                      {selfComment.strengths && `Tu disais avoir bien fait : "${selfComment.strengths}". `}
+                      {selfComment.weaknesses && `Et avoir raté : "${selfComment.weaknesses}". `}
+                      Voyons ce que j'en pense.
+                    </p>
+                  </div>
+                )}
+
+                {/* Ressenti SDR */}
+                {selfComment.feeling && (
+                  <div style={{ ...card(), display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ fontSize: 28 }}>
+                      {{"En feu":"🔥","Solide":"😊","Moyen":"😐","Frustrant":"😤","À améliorer":"💪"}[selfComment.feeling] || "🎯"}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 2 }}>Ressenti SDR sur ce call</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: V.white }}>{selfComment.feeling}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Confrontation par critère */}
+                {CRITERIA.map(section => (
+                  <div key={section.section} style={card()}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                      <span style={{ fontSize: 16 }}>{section.icon}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: section.color, textTransform: "uppercase", letterSpacing: "1px" }}>{section.section}</span>
+                    </div>
+                    {section.items.map(c => {
+                      const sdrScore = selfScores[c.id] ?? 0;
+                      const coachScore = scores[c.id] ?? 0;
+                      const diff = coachScore - sdrScore;
+                      const sdrSc = SCORES.find(s => s.value === sdrScore);
+                      const coachSc = SCORES.find(s => s.value === coachScore);
+                      const gapColor = Math.abs(diff) === 0 ? "#10B981" : Math.abs(diff) === 1 ? "#F59E0B" : "#EF4444";
+                      const gapLabel = diff === 0 ? "✅ Aligné" : diff > 0 ? `⬆️ +${diff} (sous-estimé)` : `⬇️ ${diff} (surestimé)`;
+                      const gapMsg = diff <= -2 ? "Angle mort — tu te vois mieux que tu n'es" : diff >= 2 ? "Manque de confiance — tu vaux mieux que ça" : diff !== 0 ? "Léger écart — normal, ça s'affine" : "Bonne lucidité sur ce point";
+                      return (
+                        <div key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 0" }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: V.white, marginBottom: 10 }}>{c.label}</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center", marginBottom: 8 }}>
+                            {/* SDR */}
+                            <div style={{ background: `${sdrSc?.color || V.s4}10`, border: `1px solid ${sdrSc?.color || V.s4}30`, borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
+                              <div style={{ fontSize: 10, color: V.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.8px" }}>🙋 Toi</div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: sdrSc?.color || V.s4 }}>{sdrSc?.label || "—"}</div>
+                            </div>
+                            {/* Gap indicator */}
+                            <div style={{ textAlign: "center" }}>
+                              <div style={{ fontSize: 18, color: gapColor }}>{diff === 0 ? "=" : diff > 0 ? "↑" : "↓"}</div>
+                              <div style={{ fontSize: 9, color: gapColor, fontWeight: 700, whiteSpace: "nowrap" }}>{gapLabel}</div>
+                            </div>
+                            {/* Coach */}
+                            <div style={{ background: `${coachSc?.color || V.s4}10`, border: `1px solid ${coachSc?.color || V.s4}30`, borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
+                              <div style={{ fontSize: 10, color: V.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.8px" }}>🤖 Marc</div>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: coachSc?.color || V.s4 }}>{coachSc?.label || "—"}</div>
+                            </div>
+                          </div>
+                          {/* Message sur l'écart */}
+                          {diff !== 0 && (
+                            <div style={{ background: `${gapColor}10`, border: `1px solid ${gapColor}25`, borderRadius: 8, padding: "8px 12px", fontSize: 12, color: V.bg1, lineHeight: 1.6 }}>
+                              <span style={{ color: gapColor, fontWeight: 700 }}>Marc : </span>{gapMsg}
+                              {justifications[c.id] && ` — ${justifications[c.id].slice(0, 120)}${justifications[c.id].length > 120 ? "…" : ""}`}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+
+                {/* Stats d'écart globales */}
+                <div style={card()}>
+                  <span style={sLabel}>📊 Bilan de ta lucidité</span>
+                  {(() => {
+                    const allIds = CRITERIA.flatMap(s => s.items.map(i => i.id));
+                    const rated = allIds.filter(id => (selfScores[id] ?? 0) > 0 && (scores[id] ?? 0) > 0);
+                    const aligned = rated.filter(id => scores[id] === selfScores[id]).length;
+                    const overrated = rated.filter(id => selfScores[id] > scores[id]).length;
+                    const underrated = rated.filter(id => selfScores[id] < scores[id]).length;
+                    return (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+                        {[
+                          { label: "Aligné", value: aligned, color: "#10B981", icon: "✅" },
+                          { label: "Surestimé", value: overrated, color: "#EF4444", icon: "⬆️" },
+                          { label: "Sous-estimé", value: underrated, color: "#F59E0B", icon: "⬇️" },
+                        ].map(k => (
+                          <div key={k.label} style={{ textAlign: "center", background: `${k.color}10`, border: `1px solid ${k.color}30`, borderRadius: 10, padding: "14px 8px" }}>
+                            <div style={{ fontSize: 20, marginBottom: 4 }}>{k.icon}</div>
+                            <div style={{ fontSize: 22, fontWeight: 800, color: k.color }}>{k.value}</div>
+                            <div style={{ fontSize: 10, color: V.s5, textTransform: "uppercase", letterSpacing: "0.8px", marginTop: 2 }}>{k.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </>)}
+            </>)}
 
             {reviewTab === "review" && CRITERIA.map(section => (
               <div key={section.section} style={card()}>
