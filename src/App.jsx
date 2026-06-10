@@ -1862,42 +1862,70 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
         {/* ══ REVIEW ══════════════════════════════════════════════════════════════ */}
         {page === "review" && (<>
           {loading && <CoachCinematic/>}
-          {!loading && scores && Object.keys(scores).length > 0 && (() => {
-            const lucScore = selfDone ? calcLUC(selfScores, scores) : null;
+          {!loading && (() => {
+            // Si les states sont vides (retour sur la page), on utilise le dernier call sauvegardé
+            const hasState = scores && Object.keys(scores).length > 0;
+            const fallback = !hasState && reviews.length > 0 ? reviews[0] : null;
+
+            const displayScores = hasState ? scores : (fallback?.scores || {});
+            const displayJust = hasState ? justifications : (fallback?.justifications || {});
+            const displayExpert = hasState ? expertScripts : (fallback?.expertScripts || {});
+            const displayLevelUp = hasState ? levelUp : (fallback?.levelUp || {});
+            const displayComment = hasState ? globalComment : (fallback?.globalComment || "");
+            const displayStrengths = hasState ? globalStrengths : (fallback?.globalStrengths || []);
+            const displayImprovements = hasState ? globalImprovements : (fallback?.globalImprovements || []);
+            const displaySelfScores = hasState ? selfScores : (fallback?.selfScores || {});
+            const displaySelfDone = hasState ? selfDone : !!fallback?.selfScores;
+            const displaySelfComment = hasState ? selfComment : (fallback?.selfComment || {});
+            const displayLucScore = hasState ? (selfDone ? calcLUC(selfScores, scores) : null) : fallback?.lucScore;
+            const displayPct = hasState ? globalPct : (fallback?.globalPct || 0);
+            const displayMeta = hasState ? meta : { prospect: fallback?.prospectName || "", date: fallback?.callDate || "" };
+
+            if (!hasState && !fallback) return (
+              <div style={{ textAlign: "center", padding: 80 }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: V.white, marginBottom: 8 }}>Aucune analyse en cours</div>
+                <div style={{ color: V.s5, fontSize: 13, marginBottom: 24 }}>Lance une nouvelle analyse pour voir les résultats ici.</div>
+                <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 12, color: V.white, fontWeight: 700, fontSize: 14, padding: "12px 28px", cursor: "pointer", fontFamily: "inherit" }}>✍️ Analyser un call</button>
+              </div>
+            );
+
+            const m = getMedal(displayPct);
             const allIds = CRITERIA.flatMap(s => s.items.map(i => i.id));
-            const rated = allIds.filter(id => (selfScores[id]??0) > 0 && (scores[id]??0) > 0);
-            const aligned = rated.filter(id => scores[id] === selfScores[id]).length;
-            const overrated = rated.filter(id => selfScores[id] > scores[id]).length;
-            const underrated = rated.filter(id => selfScores[id] < scores[id]).length;
-            const xpGained = 50 + ((globalPct||0) >= 80 ? 60 : 0) + (lucScore >= 70 ? 40 : 0);
-            const m = getMedal(globalPct);
+            const rated = allIds.filter(id => (displaySelfScores[id]??0) > 0 && (displayScores[id]??0) > 0);
+            const aligned = rated.filter(id => displayScores[id] === displaySelfScores[id]).length;
+            const overrated = rated.filter(id => (displaySelfScores[id]||0) > (displayScores[id]||0)).length;
+            const underrated = rated.filter(id => (displaySelfScores[id]||0) < (displayScores[id]||0)).length;
+            const xpGained = 50 + (displayPct >= 80 ? 60 : 0) + ((displayLucScore||0) >= 70 ? 40 : 0);
 
             return (
               <div style={{ animation: "fadeInUp .5s ease" }}>
+                {fallback && (
+                  <div style={{ background: `${V.blue}10`, border: `1px solid ${V.blue}30`, borderRadius: 10, padding: "10px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 13 }}>📋</span>
+                    <span style={{ fontSize: 12, color: V.s5 }}>Affichage du dernier call analysé — <strong style={{ color: V.white }}>{fallback.prospectName || "Prospect"}</strong> · {fallback.callDate || ""}</span>
+                    <button onClick={() => setPage("new")} style={{ marginLeft: "auto", background: V.orange, border: "none", borderRadius: 8, color: V.white, fontSize: 11, fontWeight: 700, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>+ Nouveau</button>
+                  </div>
+                )}
 
                 {/* ══ 1. VERDICT D'ENTRÉE ══ */}
                 <div style={{ ...card(), background: `linear-gradient(135deg, ${m.color}15, rgba(255,255,255,0.03))`, border: `1px solid ${m.color}30`, marginBottom: 16, textAlign: "center", padding: "28px 20px", position: "relative", overflow: "hidden" }}>
-                  {/* Bg pattern */}
                   <div style={{ position: "absolute", inset: 0, opacity: 0.03 }}>
                     <svg width="100%" height="100%"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill={m.color}/></pattern></defs><rect width="100%" height="100%" fill="url(#dots)"/></svg>
                   </div>
                   <div style={{ position: "relative", zIndex: 1 }}>
                     <div style={{ fontSize: 48, marginBottom: 8, filter: `drop-shadow(0 0 16px ${m.color})` }}>{m.icon}</div>
-                    <div style={{ fontSize: 52, fontWeight: 900, color: m.color, letterSpacing: "-2px", lineHeight: 1, textShadow: `0 0 30px ${m.color}60` }}>{globalPct}%</div>
+                    <div style={{ fontSize: 52, fontWeight: 900, color: m.color, letterSpacing: "-2px", lineHeight: 1, textShadow: `0 0 30px ${m.color}60` }}>{displayPct}%</div>
                     <div style={{ fontSize: 16, color: V.white, fontWeight: 700, marginTop: 6 }}>{m.label}</div>
-                    {meta.prospect && <div style={{ fontSize: 13, color: V.s5, marginTop: 4 }}>Call avec <strong style={{ color: V.white }}>{meta.prospect}</strong>{meta.date ? ` · ${meta.date}` : ""}</div>}
-
-                    {/* XP gagné */}
+                    {displayMeta.prospect && <div style={{ fontSize: 13, color: V.s5, marginTop: 4 }}>Call avec <strong style={{ color: V.white }}>{displayMeta.prospect}</strong>{displayMeta.date ? ` · ${displayMeta.date}` : ""}</div>}
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 18px" }}>
                       <span style={{ fontSize: 14 }}>⚡</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: myLevel.color }}>+{xpGained} XP</span>
-                      <span style={{ fontSize: 11, color: V.s5 }}>· Niveau {myLevel.name}</span>
+                      <span style={{ fontSize: 11, color: V.s5 }}>· {myLevel.name}</span>
                     </div>
-
-                    {/* Sections scores */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginTop: 20 }}>
                       {CRITERIA.map(s => {
-                        const pct = sectionPct(s, scores);
+                        const pct = sectionPct(s, displayScores);
                         return (
                           <div key={s.section} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "10px 6px" }}>
                             <div style={{ fontSize: 16, marginBottom: 4 }}>{s.icon}</div>
@@ -1907,16 +1935,14 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         );
                       })}
                     </div>
-
-                    {/* Status */}
                     <div style={{ marginTop: 14, fontSize: 11, color: saveStatus === "saved" ? "#10B981" : V.s4 }}>
-                      {saveStatus === "saved" ? "✅ Sauvegardé automatiquement" : "💾 Sauvegarde en cours..."}
+                      {saveStatus === "saved" ? "✅ Sauvegardé" : fallback ? "📋 Depuis l'historique" : "💾 En cours..."}
                     </div>
                   </div>
                 </div>
 
                 {/* ══ 2. VERDICT DE MARC ══ */}
-                {globalComment && (
+                {displayComment && (
                   <div style={{ ...card(), border: `1px solid ${V.neon}20`, marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                       <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${V.neon}20`, border: `2px solid ${V.neon}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🧑‍💼</div>
@@ -1926,26 +1952,26 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                       </div>
                     </div>
                     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
-                      <p style={{ color: V.bg1, fontSize: 14, lineHeight: 1.9, margin: 0 }}>{globalComment}</p>
+                      <p style={{ color: V.bg1, fontSize: 14, lineHeight: 1.9, margin: 0 }}>{displayComment}</p>
                     </div>
-                    {(globalStrengths.length > 0 || globalImprovements.length > 0) && (
+                    {(displayStrengths.length > 0 || displayImprovements.length > 0) && (
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                         <div>
                           <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>✅ Ce que t'as bien fait</div>
-                          {globalStrengths.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 6, borderLeft: "2px solid #10B981", lineHeight: 1.5 }}>{s}</div>)}
+                          {displayStrengths.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 6, borderLeft: "2px solid #10B981", lineHeight: 1.5 }}>{s}</div>)}
                         </div>
                         <div>
                           <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🎯 Ce qu'on travaille</div>
-                          {globalImprovements.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 6, borderLeft: `2px solid ${V.orange}`, lineHeight: 1.5 }}>{s}</div>)}
+                          {displayImprovements.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 6, borderLeft: `2px solid ${V.orange}`, lineHeight: 1.5 }}>{s}</div>)}
                         </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* ══ 3. MIROIR — si autoéval ══ */}
-                {selfDone && rated.length > 0 && (
-                  <div style={{ ...card(), border: `1px solid #8B5CF650`, marginBottom: 16 }}>
+                {/* ══ 3. MIROIR ══ */}
+                {displaySelfDone && rated.length > 0 && (
+                  <div style={{ ...card(), border: "1px solid #8B5CF650", marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 20 }}>🪞</span>
@@ -1954,15 +1980,13 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                           <div style={{ fontSize: 11, color: V.s5 }}>Ta lucidité sur ton propre call</div>
                         </div>
                       </div>
-                      {lucScore !== null && (
-                        <div style={{ textAlign: "center", background: `#8B5CF620`, border: "1px solid #8B5CF650", borderRadius: 12, padding: "8px 16px" }}>
-                          <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>{lucScore}</div>
+                      {displayLucScore !== null && displayLucScore !== undefined && (
+                        <div style={{ textAlign: "center", background: "#8B5CF620", border: "1px solid #8B5CF650", borderRadius: 12, padding: "8px 16px" }}>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>{displayLucScore}</div>
                           <div style={{ fontSize: 9, color: V.s5, textTransform: "uppercase", letterSpacing: "1px" }}>Score LUC</div>
                         </div>
                       )}
                     </div>
-
-                    {/* Bilan rapide */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
                       {[
                         { label: "Aligné", value: aligned, color: "#10B981", icon: "🎯", msg: "Tu te connais" },
@@ -1976,33 +2000,27 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         </div>
                       ))}
                     </div>
-
-                    {/* Cartes retournables par critère — 5 plus gros écarts */}
-                    <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>🃏 Les plus grands écarts</div>
+                    <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>🃏 Plus grands écarts</div>
                     {(() => {
                       const bigGaps = rated
-                        .map(id => ({ id, diff: (selfScores[id]||0) - (scores[id]||0), criterion: CRITERIA.flatMap(s=>s.items).find(c=>c.id===id) }))
-                        .filter(g => Math.abs(g.diff) >= 1)
-                        .sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff))
-                        .slice(0, 5);
-                      if (!bigGaps.length) return <div style={{ color: V.s5, fontSize: 13 }}>🎯 Excellente lucidité — pas de gros écarts !</div>;
+                        .map(id => ({ id, diff: (displaySelfScores[id]||0) - (displayScores[id]||0), criterion: CRITERIA.flatMap(s=>s.items).find(c=>c.id===id) }))
+                        .filter(g => Math.abs(g.diff) >= 1).sort((a,b) => Math.abs(b.diff)-Math.abs(a.diff)).slice(0,5);
+                      if (!bigGaps.length) return <div style={{ color: V.s5, fontSize: 13 }}>🎯 Excellente lucidité !</div>;
                       return bigGaps.map(({ id, diff, criterion }) => {
-                        const sdrSc = SCORES.find(s => s.value === selfScores[id]);
-                        const coachSc = SCORES.find(s => s.value === scores[id]);
-                        const isOverrated = diff > 0;
-                        const gapColor = isOverrated ? "#EF4444" : "#F59E0B";
+                        const sdrSc = SCORES.find(s => s.value === (displaySelfScores[id]||0));
+                        const coachSc = SCORES.find(s => s.value === (displayScores[id]||0));
+                        const isOver = diff > 0;
+                        const gc = isOver ? "#EF4444" : "#F59E0B";
                         return (
-                          <div key={id} style={{ background: `${gapColor}08`, border: `1px solid ${gapColor}20`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                              <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: V.white }}>{criterion?.label}</div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Toi: {sdrSc?.label}</span>
-                                <span style={{ fontSize: 14, color: gapColor }}>{isOverrated ? "→" : "→"}</span>
-                                <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Marc: {coachSc?.label}</span>
-                              </div>
+                          <div key={id} style={{ background: `${gc}08`, border: `1px solid ${gc}20`, borderRadius: 12, padding: "10px 14px", marginBottom: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: V.white }}>{criterion?.label}</span>
+                              <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Toi: {sdrSc?.label}</span>
+                              <span style={{ color: gc }}>→</span>
+                              <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Marc: {coachSc?.label}</span>
                             </div>
-                            <div style={{ marginTop: 8, fontSize: 11, color: gapColor, fontStyle: "italic" }}>
-                              {isOverrated ? `⚠️ Angle mort — tu t'es donné ${sdrSc?.label} mais Marc voit ${coachSc?.label}` : `💪 Tu te sous-estimes — Marc pense ${coachSc?.label} et non ${sdrSc?.label}`}
+                            <div style={{ fontSize: 11, color: gc, fontStyle: "italic" }}>
+                              {isOver ? "⚠️ Angle mort — tu te voyais mieux que Marc te voit" : "💪 Tu te sous-estimais — Marc pense mieux de toi"}
                             </div>
                           </div>
                         );
@@ -2012,9 +2030,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 )}
 
                 {/* ══ 4. CRITÈRES + MARC TE PARLE ══ */}
-                {CRITERIA.map((section, sIdx) => (
+                {CRITERIA.map(section => (
                   <div key={section.section} style={{ ...card(), marginBottom: 16 }}>
-                    {/* Header section */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ fontSize: 22 }}>{section.icon}</span>
@@ -2024,34 +2041,25 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         </div>
                       </div>
                       <div style={{ background: `${section.color}15`, border: `1px solid ${section.color}40`, borderRadius: 20, padding: "5px 16px" }}>
-                        <span style={{ fontSize: 16, fontWeight: 900, color: section.color }}>{sectionPct(section, scores)}%</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: section.color }}>{sectionPct(section, displayScores)}%</span>
                       </div>
                     </div>
-
-                    {/* Critères */}
                     {section.items.map(c => {
-                      const sc = SCORES.find(s => s.value === (scores[c.id]||0));
-                      const selfSc = selfDone ? SCORES.find(s => s.value === (selfScores[c.id]||0)) : null;
-                      const expert = expertScripts?.[c.id];
-                      const up = levelUp?.[c.id];
-                      const just = justifications?.[c.id];
+                      const sc = SCORES.find(s => s.value === (displayScores[c.id]||0));
+                      const selfSc = displaySelfDone ? SCORES.find(s => s.value === (displaySelfScores[c.id]||0)) : null;
+                      const just = displayJust?.[c.id];
+                      const expert = displayExpert?.[c.id];
+                      const up = displayLevelUp?.[c.id];
                       return (
                         <div key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: 16, marginBottom: 16 }}>
-                          {/* Ligne score */}
                           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                             <div style={{ width: 6, height: 6, borderRadius: "50%", background: section.color, flexShrink: 0 }}/>
                             <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: V.white }}>{c.label}</span>
                             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                              {selfSc && selfSc.value > 0 && (
-                                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>Toi: {selfSc.label}</span>
-                              )}
-                              {sc && sc.value > 0 && (
-                                <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 20, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>Marc: {sc.label}</span>
-                              )}
+                              {selfSc && selfSc.value > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>Toi: {selfSc.label}</span>}
+                              {sc && sc.value > 0 && <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 20, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>Marc: {sc.label}</span>}
                             </div>
                           </div>
-
-                          {/* Analyse Marc */}
                           {just && (
                             <div style={{ marginLeft: 16, marginBottom: 10 }}>
                               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -2063,8 +2071,6 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                               </div>
                             </div>
                           )}
-
-                          {/* Script expert */}
                           {expert && (
                             <div style={{ marginLeft: 16, marginBottom: 8 }}>
                               <div style={{ background: `${V.blue}12`, border: `1px solid ${V.neon}20`, borderRadius: 10, padding: "10px 14px" }}>
@@ -2073,12 +2079,10 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                               </div>
                             </div>
                           )}
-
-                          {/* Phrases à utiliser */}
                           {up?.scripts?.length > 0 && (
                             <div style={{ marginLeft: 16 }}>
                               <div style={{ fontSize: 9, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>💬 Phrases à utiliser</div>
-                              {up.scripts.map((s, i) => (
+                              {up.scripts.map((s,i) => (
                                 <div key={i} style={{ background: `${V.orange}08`, border: `1px solid ${V.orange}20`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: V.s5, fontStyle: "italic", lineHeight: 1.6, marginBottom: 5 }}>
                                   <span style={{ color: V.orange, fontWeight: 800, fontStyle: "normal" }}>{i+1}. </span>"{s}"
                                 </div>
@@ -2091,14 +2095,14 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                   </div>
                 ))}
 
-                {/* ══ 5. BADGES DÉBLOQUÉS SUR CE CALL ══ */}
+                {/* ══ 5. BADGES DÉBLOQUÉS ══ */}
                 {(() => {
                   const newBadges = BADGES.filter(b => b.condition(reviews, objectives));
                   if (!newBadges.length) return null;
                   return (
-                    <div style={{ ...card(), border: `1px solid ${V.neon}20`, textAlign: "center", padding: 24 }}>
+                    <div style={{ ...card(), border: `1px solid ${V.neon}20`, textAlign: "center", padding: 24, marginBottom: 16 }}>
                       <div style={{ fontSize: 14, fontWeight: 800, color: V.white, marginBottom: 4 }}>🎖️ Écussons débloqués</div>
-                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 16 }}>Tu progresses. Continue comme ça.</div>
+                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 16 }}>Continue comme ça.</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
                         {newBadges.slice(0,4).map(b => (
                           <div key={b.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 14px", background: `${V.neon}08`, border: `1.5px solid ${V.neon}30`, borderRadius: 12 }}>
