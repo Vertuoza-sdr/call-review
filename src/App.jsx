@@ -311,7 +311,7 @@ function CriterionRow({ criterion, scores, justifications, expertScripts, levelU
         )}
         {up && (
           <div style={{ background: "rgba(255,66,23,0.1)", border: "1px solid rgba(255,66,23,0.25)", borderLeft: `3px solid ${V.orange}`, borderRadius: 10, padding: "12px 14px" }}>
-            <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🚀 Pour passer au niveau supérieur</div>
+            <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🚀 Phrases à utiliser</div>
             {up.tip && <div style={{ color: V.bg1, fontSize: 12.5, lineHeight: 1.7, marginBottom: 8 }}>{up.tip}</div>}
             {up.scripts?.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1396,7 +1396,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
               </div>
             <div>
               <div style={{ fontSize: 13, color: V.neon, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", marginBottom: 2 }}>Vertuoza</div>
-              <div style={{ fontSize: 11, color: V.s4, letterSpacing: "2px", textTransform: "uppercase" }}>SDR Performance Platform</div>
+              <div style={{ fontSize: 11, color: V.s4, letterSpacing: "2px", textTransform: "uppercase" }}>Sales Performance Platform</div>
             </div>
           </div>
 
@@ -1535,7 +1535,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           <div style={{ width: 34, height: 34, borderRadius: 10, background: V.blue, border: `1.5px solid ${V.neon}40`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: V.neon }}>V</div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800 }}>Vertuoza <span style={{ color: V.neon }}>Call Review</span></div>
-            <div style={{ fontSize: 10, color: V.s5, letterSpacing: "1px", textTransform: "uppercase" }}>SDR Performance</div>
+            <div style={{ fontSize: 10, color: V.s5, letterSpacing: "1px", textTransform: "uppercase" }}>Sales Performance</div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -1862,104 +1862,227 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
         {/* ══ REVIEW ══════════════════════════════════════════════════════════════ */}
         {page === "review" && (<>
           {loading && <CoachCinematic/>}
-          {!loading && (<>
-            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-              {[["mirror","🪞 Miroir"],["review","🎯 Critères"],["summary","📊 Synthèse"]].map(([id,lbl]) => (
-                <button key={id} onClick={() => setReviewTab(id)} style={{ flex: 1, padding: "10px", background: reviewTab === id ? V.blue : "rgba(255,255,255,0.05)", border: `1.5px solid ${reviewTab === id ? V.blue : V.border}`, borderRadius: 10, color: reviewTab === id ? V.white : V.s5, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{lbl}</button>
-              ))}
-            </div>
+          {!loading && scores && Object.keys(scores).length > 0 && (() => {
+            const lucScore = selfDone ? calcLUC(selfScores, scores) : null;
+            const allIds = CRITERIA.flatMap(s => s.items.map(i => i.id));
+            const rated = allIds.filter(id => (selfScores[id]??0) > 0 && (scores[id]??0) > 0);
+            const aligned = rated.filter(id => scores[id] === selfScores[id]).length;
+            const overrated = rated.filter(id => selfScores[id] > scores[id]).length;
+            const underrated = rated.filter(id => selfScores[id] < scores[id]).length;
+            const xpGained = 50 + ((globalPct||0) >= 80 ? 60 : 0) + (lucScore >= 70 ? 40 : 0);
+            const m = getMedal(globalPct);
 
-            {/* Status sauvegarde + meta */}
-            <div style={{ ...card(), padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ background: saveStatus === "saved" ? "#10B98120" : "rgba(255,255,255,0.05)", border: `1px solid ${saveStatus === "saved" ? "#10B98140" : V.border}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, color: saveStatus === "saved" ? "#10B981" : V.s4, fontWeight: 600 }}>
-                {saveStatus === "saved" ? "✅ Sauvegardé automatiquement" : "💾 Sauvegarde auto après analyse"}
-              </div>
-              {meta.prospect && <span style={{ fontSize: 12, color: V.s5 }}>🎯 <strong style={{ color: V.white }}>{meta.prospect}</strong></span>}
-              {meta.date && <span style={{ fontSize: 12, color: V.s5 }}>📅 <strong style={{ color: V.white }}>{meta.date}</strong></span>}
-              {globalPct > 0 && (
-                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-                  <Stars count={medal.stars} color={medal.color}/>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: medal.color }}>{globalPct}%</span>
-                  <span style={{ fontSize: 14 }}>{medal.icon}</span>
-                </div>
-              )}
-            </div>
+            return (
+              <div style={{ animation: "fadeInUp .5s ease" }}>
 
-            {reviewTab === "mirror" && (<>
-              {!selfDone ? (
-                <div style={{ ...card(), textAlign: "center", padding: 40 }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>🪞</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: V.white, marginBottom: 8 }}>Aucune autoévaluation pour ce call</div>
-                  <div style={{ fontSize: 13, color: V.s5 }}>L'autoévaluation était optionnelle pour ce call. Dès le prochain, elle sera obligatoire et tu pourras voir la confrontation ici.</div>
+                {/* ══ 1. VERDICT D'ENTRÉE ══ */}
+                <div style={{ ...card(), background: `linear-gradient(135deg, ${m.color}15, rgba(255,255,255,0.03))`, border: `1px solid ${m.color}30`, marginBottom: 16, textAlign: "center", padding: "28px 20px", position: "relative", overflow: "hidden" }}>
+                  {/* Bg pattern */}
+                  <div style={{ position: "absolute", inset: 0, opacity: 0.03 }}>
+                    <svg width="100%" height="100%"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill={m.color}/></pattern></defs><rect width="100%" height="100%" fill="url(#dots)"/></svg>
+                  </div>
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    <div style={{ fontSize: 48, marginBottom: 8, filter: `drop-shadow(0 0 16px ${m.color})` }}>{m.icon}</div>
+                    <div style={{ fontSize: 52, fontWeight: 900, color: m.color, letterSpacing: "-2px", lineHeight: 1, textShadow: `0 0 30px ${m.color}60` }}>{globalPct}%</div>
+                    <div style={{ fontSize: 16, color: V.white, fontWeight: 700, marginTop: 6 }}>{m.label}</div>
+                    {meta.prospect && <div style={{ fontSize: 13, color: V.s5, marginTop: 4 }}>Call avec <strong style={{ color: V.white }}>{meta.prospect}</strong>{meta.date ? ` · ${meta.date}` : ""}</div>}
+
+                    {/* XP gagné */}
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 18px" }}>
+                      <span style={{ fontSize: 14 }}>⚡</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: myLevel.color }}>+{xpGained} XP</span>
+                      <span style={{ fontSize: 11, color: V.s5 }}>· Niveau {myLevel.name}</span>
+                    </div>
+
+                    {/* Sections scores */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginTop: 20 }}>
+                      {CRITERIA.map(s => {
+                        const pct = sectionPct(s, scores);
+                        return (
+                          <div key={s.section} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "10px 6px" }}>
+                            <div style={{ fontSize: 16, marginBottom: 4 }}>{s.icon}</div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: s.color }}>{pct}%</div>
+                            <div style={{ fontSize: 8, color: V.s5, textTransform: "uppercase", letterSpacing: "0.5px", marginTop: 2 }}>{s.section.split(" ")[0]}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Status */}
+                    <div style={{ marginTop: 14, fontSize: 11, color: saveStatus === "saved" ? "#10B981" : V.s4 }}>
+                      {saveStatus === "saved" ? "✅ Sauvegardé automatiquement" : "💾 Sauvegarde en cours..."}
+                    </div>
+                  </div>
                 </div>
-              ) : (<>
-                {/* Commentaire IA sur l'autoéval */}
+
+                {/* ══ 2. VERDICT DE MARC ══ */}
                 {globalComment && (
-                  <div style={{ ...card(), background: "rgba(0,63,218,0.08)", border: `1px solid ${V.blue}30`, borderLeft: `3px solid ${V.neon}` }}>
-                    <div style={{ fontSize: 11, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>🧠 Marc analyse ton autoévaluation</div>
-                    <p style={{ color: V.bg1, fontSize: 13.5, lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
-                      {/* selfAnalysisComment stored in globalComment for now — separate field in production */}
-                      {selfComment.strengths && `Tu disais avoir bien fait : "${selfComment.strengths}". `}
-                      {selfComment.weaknesses && `Et avoir raté : "${selfComment.weaknesses}". `}
-                      Voyons ce que j'en pense.
-                    </p>
+                  <div style={{ ...card(), border: `1px solid ${V.neon}20`, marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${V.neon}20`, border: `2px solid ${V.neon}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🧑‍💼</div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>Marc</div>
+                        <div style={{ fontSize: 10, color: V.neon, letterSpacing: "1px" }}>Coach Sales · Vertuoza</div>
+                      </div>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                      <p style={{ color: V.bg1, fontSize: 14, lineHeight: 1.9, margin: 0 }}>{globalComment}</p>
+                    </div>
+                    {(globalStrengths.length > 0 || globalImprovements.length > 0) && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>✅ Ce que t'as bien fait</div>
+                          {globalStrengths.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 6, borderLeft: "2px solid #10B981", lineHeight: 1.5 }}>{s}</div>)}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🎯 Ce qu'on travaille</div>
+                          {globalImprovements.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 6, borderLeft: `2px solid ${V.orange}`, lineHeight: 1.5 }}>{s}</div>)}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Ressenti SDR */}
-                {selfComment.feeling && (
-                  <div style={{ ...card(), display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ fontSize: 28 }}>
-                      {{"En feu":"🔥","Solide":"😊","Moyen":"😐","Frustrant":"😤","À améliorer":"💪"}[selfComment.feeling] || "🎯"}
+                {/* ══ 3. MIROIR — si autoéval ══ */}
+                {selfDone && rated.length > 0 && (
+                  <div style={{ ...card(), border: `1px solid #8B5CF650`, marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 20 }}>🪞</span>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>Miroir — Toi vs Marc</div>
+                          <div style={{ fontSize: 11, color: V.s5 }}>Ta lucidité sur ton propre call</div>
+                        </div>
+                      </div>
+                      {lucScore !== null && (
+                        <div style={{ textAlign: "center", background: `#8B5CF620`, border: "1px solid #8B5CF650", borderRadius: 12, padding: "8px 16px" }}>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>{lucScore}</div>
+                          <div style={{ fontSize: 9, color: V.s5, textTransform: "uppercase", letterSpacing: "1px" }}>Score LUC</div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 2 }}>Ressenti SDR sur ce call</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: V.white }}>{selfComment.feeling}</div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Confrontation par critère */}
-                {CRITERIA.map(section => (
-                  <div key={section.section} style={card()}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                      <span style={{ fontSize: 16 }}>{section.icon}</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: section.color, textTransform: "uppercase", letterSpacing: "1px" }}>{section.section}</span>
+                    {/* Bilan rapide */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
+                      {[
+                        { label: "Aligné", value: aligned, color: "#10B981", icon: "🎯", msg: "Tu te connais" },
+                        { label: "Surestimé", value: overrated, color: "#EF4444", icon: "⚠️", msg: "Angles morts" },
+                        { label: "Sous-estimé", value: underrated, color: "#F59E0B", icon: "💪", msg: "Trop modeste" },
+                      ].map(k => (
+                        <div key={k.label} style={{ textAlign: "center", background: `${k.color}08`, border: `1px solid ${k.color}25`, borderRadius: 10, padding: "10px 6px" }}>
+                          <div style={{ fontSize: 20 }}>{k.icon}</div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: k.color }}>{k.value}</div>
+                          <div style={{ fontSize: 9, color: V.s5, marginTop: 2 }}>{k.msg}</div>
+                        </div>
+                      ))}
                     </div>
-                    {section.items.map(c => {
-                      const sdrScore = selfScores[c.id] ?? 0;
-                      const coachScore = scores[c.id] ?? 0;
-                      const diff = coachScore - sdrScore;
-                      const sdrSc = SCORES.find(s => s.value === sdrScore);
-                      const coachSc = SCORES.find(s => s.value === coachScore);
-                      const gapColor = Math.abs(diff) === 0 ? "#10B981" : Math.abs(diff) === 1 ? "#F59E0B" : "#EF4444";
-                      const gapLabel = diff === 0 ? "✅ Aligné" : diff > 0 ? `⬆️ +${diff} (sous-estimé)` : `⬇️ ${diff} (surestimé)`;
-                      const gapMsg = diff <= -2 ? "Angle mort — tu te vois mieux que tu n'es" : diff >= 2 ? "Manque de confiance — tu vaux mieux que ça" : diff !== 0 ? "Léger écart — normal, ça s'affine" : "Bonne lucidité sur ce point";
-                      return (
-                        <div key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "12px 0" }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: V.white, marginBottom: 10 }}>{c.label}</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "center", marginBottom: 8 }}>
-                            {/* SDR */}
-                            <div style={{ background: `${sdrSc?.color || V.s4}10`, border: `1px solid ${sdrSc?.color || V.s4}30`, borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                              <div style={{ fontSize: 10, color: V.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.8px" }}>🙋 Toi</div>
-                              <div style={{ fontSize: 13, fontWeight: 800, color: sdrSc?.color || V.s4 }}>{sdrSc?.label || "—"}</div>
+
+                    {/* Cartes retournables par critère — 5 plus gros écarts */}
+                    <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>🃏 Les plus grands écarts</div>
+                    {(() => {
+                      const bigGaps = rated
+                        .map(id => ({ id, diff: (selfScores[id]||0) - (scores[id]||0), criterion: CRITERIA.flatMap(s=>s.items).find(c=>c.id===id) }))
+                        .filter(g => Math.abs(g.diff) >= 1)
+                        .sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff))
+                        .slice(0, 5);
+                      if (!bigGaps.length) return <div style={{ color: V.s5, fontSize: 13 }}>🎯 Excellente lucidité — pas de gros écarts !</div>;
+                      return bigGaps.map(({ id, diff, criterion }) => {
+                        const sdrSc = SCORES.find(s => s.value === selfScores[id]);
+                        const coachSc = SCORES.find(s => s.value === scores[id]);
+                        const isOverrated = diff > 0;
+                        const gapColor = isOverrated ? "#EF4444" : "#F59E0B";
+                        return (
+                          <div key={id} style={{ background: `${gapColor}08`, border: `1px solid ${gapColor}20`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                              <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: V.white }}>{criterion?.label}</div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Toi: {sdrSc?.label}</span>
+                                <span style={{ fontSize: 14, color: gapColor }}>{isOverrated ? "→" : "→"}</span>
+                                <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Marc: {coachSc?.label}</span>
+                              </div>
                             </div>
-                            {/* Gap indicator */}
-                            <div style={{ textAlign: "center" }}>
-                              <div style={{ fontSize: 18, color: gapColor }}>{diff === 0 ? "=" : diff > 0 ? "↑" : "↓"}</div>
-                              <div style={{ fontSize: 9, color: gapColor, fontWeight: 700, whiteSpace: "nowrap" }}>{gapLabel}</div>
-                            </div>
-                            {/* Coach */}
-                            <div style={{ background: `${coachSc?.color || V.s4}10`, border: `1px solid ${coachSc?.color || V.s4}30`, borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                              <div style={{ fontSize: 10, color: V.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.8px" }}>🤖 Marc</div>
-                              <div style={{ fontSize: 13, fontWeight: 800, color: coachSc?.color || V.s4 }}>{coachSc?.label || "—"}</div>
+                            <div style={{ marginTop: 8, fontSize: 11, color: gapColor, fontStyle: "italic" }}>
+                              {isOverrated ? `⚠️ Angle mort — tu t'es donné ${sdrSc?.label} mais Marc voit ${coachSc?.label}` : `💪 Tu te sous-estimes — Marc pense ${coachSc?.label} et non ${sdrSc?.label}`}
                             </div>
                           </div>
-                          {/* Message sur l'écart */}
-                          {diff !== 0 && (
-                            <div style={{ background: `${gapColor}10`, border: `1px solid ${gapColor}25`, borderRadius: 8, padding: "8px 12px", fontSize: 12, color: V.bg1, lineHeight: 1.6 }}>
-                              <span style={{ color: gapColor, fontWeight: 700 }}>Marc : </span>{gapMsg}
-                              {justifications[c.id] && ` — ${justifications[c.id].slice(0, 120)}${justifications[c.id].length > 120 ? "…" : ""}`}
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
+
+                {/* ══ 4. CRITÈRES + MARC TE PARLE ══ */}
+                {CRITERIA.map((section, sIdx) => (
+                  <div key={section.section} style={{ ...card(), marginBottom: 16 }}>
+                    {/* Header section */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 22 }}>{section.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: section.color, textTransform: "uppercase", letterSpacing: "1px" }}>{section.section}</div>
+                          <div style={{ fontSize: 11, color: V.s5 }}>{section.items.length} critères</div>
+                        </div>
+                      </div>
+                      <div style={{ background: `${section.color}15`, border: `1px solid ${section.color}40`, borderRadius: 20, padding: "5px 16px" }}>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: section.color }}>{sectionPct(section, scores)}%</span>
+                      </div>
+                    </div>
+
+                    {/* Critères */}
+                    {section.items.map(c => {
+                      const sc = SCORES.find(s => s.value === (scores[c.id]||0));
+                      const selfSc = selfDone ? SCORES.find(s => s.value === (selfScores[c.id]||0)) : null;
+                      const expert = expertScripts?.[c.id];
+                      const up = levelUp?.[c.id];
+                      const just = justifications?.[c.id];
+                      return (
+                        <div key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: 16, marginBottom: 16 }}>
+                          {/* Ligne score */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: section.color, flexShrink: 0 }}/>
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: V.white }}>{c.label}</span>
+                            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                              {selfSc && selfSc.value > 0 && (
+                                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>Toi: {selfSc.label}</span>
+                              )}
+                              {sc && sc.value > 0 && (
+                                <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 20, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>Marc: {sc.label}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Analyse Marc */}
+                          {just && (
+                            <div style={{ marginLeft: 16, marginBottom: 10 }}>
+                              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                                <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${V.neon}15`, border: `1.5px solid ${V.neon}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0, marginTop: 2 }}>🧑‍💼</div>
+                                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0 12px 12px 12px", padding: "10px 14px", flex: 1 }}>
+                                  <div style={{ fontSize: 9, color: V.neon, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "1px" }}>Marc te parle</div>
+                                  <div style={{ fontSize: 13, color: V.bg1, lineHeight: 1.8 }}>{just}</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Script expert */}
+                          {expert && (
+                            <div style={{ marginLeft: 16, marginBottom: 8 }}>
+                              <div style={{ background: `${V.blue}12`, border: `1px solid ${V.neon}20`, borderRadius: 10, padding: "10px 14px" }}>
+                                <div style={{ fontSize: 9, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>🎙️ Ce que Marc aurait dit</div>
+                                <div style={{ fontSize: 12.5, color: V.bg1, lineHeight: 1.7, fontStyle: "italic" }}>"{expert}"</div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Phrases à utiliser */}
+                          {up?.scripts?.length > 0 && (
+                            <div style={{ marginLeft: 16 }}>
+                              <div style={{ fontSize: 9, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>💬 Phrases à utiliser</div>
+                              {up.scripts.map((s, i) => (
+                                <div key={i} style={{ background: `${V.orange}08`, border: `1px solid ${V.orange}20`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: V.s5, fontStyle: "italic", lineHeight: 1.6, marginBottom: 5 }}>
+                                  <span style={{ color: V.orange, fontWeight: 800, fontStyle: "normal" }}>{i+1}. </span>"{s}"
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
@@ -1968,87 +2091,28 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                   </div>
                 ))}
 
-                {/* Stats d'écart globales */}
-                <div style={card()}>
-                  <span style={sLabel}>📊 Bilan de ta lucidité</span>
-                  {(() => {
-                    const allIds = CRITERIA.flatMap(s => s.items.map(i => i.id));
-                    const rated = allIds.filter(id => (selfScores[id] ?? 0) > 0 && (scores[id] ?? 0) > 0);
-                    const aligned = rated.filter(id => scores[id] === selfScores[id]).length;
-                    const overrated = rated.filter(id => selfScores[id] > scores[id]).length;
-                    const underrated = rated.filter(id => selfScores[id] < scores[id]).length;
-                    return (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
-                        {[
-                          { label: "Aligné", value: aligned, color: "#10B981", icon: "✅" },
-                          { label: "Surestimé", value: overrated, color: "#EF4444", icon: "⬆️" },
-                          { label: "Sous-estimé", value: underrated, color: "#F59E0B", icon: "⬇️" },
-                        ].map(k => (
-                          <div key={k.label} style={{ textAlign: "center", background: `${k.color}10`, border: `1px solid ${k.color}30`, borderRadius: 10, padding: "14px 8px" }}>
-                            <div style={{ fontSize: 20, marginBottom: 4 }}>{k.icon}</div>
-                            <div style={{ fontSize: 22, fontWeight: 800, color: k.color }}>{k.value}</div>
-                            <div style={{ fontSize: 10, color: V.s5, textTransform: "uppercase", letterSpacing: "0.8px", marginTop: 2 }}>{k.label}</div>
+                {/* ══ 5. BADGES DÉBLOQUÉS SUR CE CALL ══ */}
+                {(() => {
+                  const newBadges = BADGES.filter(b => b.condition(reviews, objectives));
+                  if (!newBadges.length) return null;
+                  return (
+                    <div style={{ ...card(), border: `1px solid ${V.neon}20`, textAlign: "center", padding: 24 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: V.white, marginBottom: 4 }}>🎖️ Écussons débloqués</div>
+                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 16 }}>Tu progresses. Continue comme ça.</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
+                        {newBadges.slice(0,4).map(b => (
+                          <div key={b.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 14px", background: `${V.neon}08`, border: `1.5px solid ${V.neon}30`, borderRadius: 12 }}>
+                            <div style={{ fontSize: 28, filter: `drop-shadow(0 0 8px ${V.neon}80)` }}>{b.icon}</div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: V.neon }}>{b.name}</div>
                           </div>
                         ))}
                       </div>
-                    );
-                  })()}
-                </div>
-              </>)}
-            </>)}
-
-            {reviewTab === "review" && CRITERIA.map(section => (
-              <div key={section.section} style={card()}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 18 }}>{section.icon}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: section.color, textTransform: "uppercase", letterSpacing: "1.2px" }}>{section.section}</span>
-                  </div>
-                  {sectionPct(section, scores) > 0 && (
-                    <div style={{ background: `${section.color}15`, border: `1px solid ${section.color}40`, borderRadius: 20, padding: "3px 14px" }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: section.color }}>{sectionPct(section, scores)}%</span>
                     </div>
-                  )}
-                </div>
-                {section.items.map(c => <CriterionRow key={c.id} criterion={c} scores={scores} justifications={justifications} expertScripts={expertScripts} levelUp={levelUp} onChange={(id,v) => setScores(s => ({...s,[id]:v}))} onJustify={(id,v) => setJustifications(j => ({...j,[id]:v}))} sectionColor={section.color}/>)}
+                  );
+                })()}
               </div>
-            ))}
-
-            {reviewTab === "summary" && (<>
-              <div style={card()}>
-                <span style={sLabel}>Score global</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 32, flexWrap: "wrap" }}>
-                  <div style={{ textAlign: "center" }}>
-                    <GaugeArc pct={globalPct} color={medal.color} size={120}/>
-                    <div style={{ fontSize: 28, marginTop: 4 }}>{medal.icon}</div>
-                    <div style={{ fontSize: 13, color: medal.color, fontWeight: 700 }}>{medal.label}</div>
-                    <Stars count={medal.stars} color={medal.color}/>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    {CRITERIA.map(s => <SectionBar key={s.section} label={s.section} pct={sectionPct(s, scores)} color={s.color} icon={s.icon}/>)}
-                  </div>
-                </div>
-              </div>
-              {globalComment && (
-                <div style={card()}>
-                  <span style={sLabel}>🎯 Verdict du coach</span>
-                  <p style={{ color: V.bg1, fontSize: 14, lineHeight: 1.8, margin: "0 0 16px" }}>{globalComment}</p>
-                  {(globalStrengths.length > 0 || globalImprovements.length > 0) && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div>
-                        <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>✅ Forces</div>
-                        {globalStrengths.map((s, i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 6, borderLeft: "2px solid #10B981" }}>{s}</div>)}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🚀 Axes prioritaires</div>
-                        {globalImprovements.map((s, i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 6, borderLeft: `2px solid ${V.orange}` }}>{s}</div>)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>)}
-          </>)}
+            );
+          })()}
         </>)}
 
         {/* ══ HISTORIQUE ══════════════════════════════════════════════════════════ */}
@@ -2593,60 +2657,187 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 
         {/* ══ DÉTAIL ══════════════════════════════════════════════════════════════ */}
         {page === "detail" && selectedReview && (() => {
-          const r = selectedReview; const m = getMedal(r.globalPct || 0);
-          const isOwner = r.userId === user?.uid;
-          const canDelete = isOwner || isAdmin;
+          const r = selectedReview;
+          const m = getMedal(r.globalPct || 0);
+          const canDelete = r.userId === user?.uid || isAdmin;
+          const rLucScore = r.lucScore;
+          const rRated = r.selfScores ? CRITERIA.flatMap(s=>s.items.map(i=>i.id)).filter(id => (r.selfScores[id]??0)>0 && (r.scores?.[id]??0)>0) : [];
+          const rAligned = rRated.filter(id => r.scores[id] === r.selfScores[id]).length;
+          const rOverrated = rRated.filter(id => (r.selfScores[id]||0) > (r.scores[id]||0)).length;
+          const rUnderrated = rRated.filter(id => (r.selfScores[id]||0) < (r.scores[id]||0)).length;
+
           return (<>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+            {/* Back + delete */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <button onClick={() => setPage("history")} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 10, color: V.s5, padding: "9px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 13 }}>← Retour</button>
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{r.prospectName || "Prospect"}</div>
-                <div style={{ fontSize: 12, color: V.s5 }}>{r.callDate} · {r.sdrName}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 800 }}>{r.prospectName || "Prospect"}</div>
+                <div style={{ fontSize: 11, color: V.s5 }}>{r.callDate} · {r.sdrName}</div>
               </div>
-              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: m.color }}>{r.globalPct || 0}%</div>
-                  <Stars count={m.stars} color={m.color}/>
-                  <div style={{ fontSize: 11, color: m.color, fontWeight: 600 }}>{m.icon} {m.label}</div>
+              {canDelete && (
+                <button onClick={() => { if (window.confirm("Supprimer ce call ?")) deleteReview(r.id); }} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 12, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit" }}>🗑️</button>
+              )}
+            </div>
+
+            {/* Verdict header */}
+            <div style={{ ...card(), background: `linear-gradient(135deg, ${m.color}15, rgba(255,255,255,0.03))`, border: `1px solid ${m.color}30`, textAlign: "center", padding: "24px 20px", marginBottom: 16 }}>
+              <div style={{ fontSize: 40, marginBottom: 6, filter: `drop-shadow(0 0 12px ${m.color})` }}>{m.icon}</div>
+              <div style={{ fontSize: 44, fontWeight: 900, color: m.color, letterSpacing: "-2px", lineHeight: 1 }}>{r.globalPct || 0}%</div>
+              <div style={{ fontSize: 14, color: V.white, fontWeight: 700, marginTop: 4 }}>{m.label}</div>
+              {rLucScore !== null && rLucScore !== undefined && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 10, background: "#8B5CF615", border: "1px solid #8B5CF640", borderRadius: 20, padding: "5px 16px" }}>
+                  <span style={{ fontSize: 12 }}>🧠</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#8B5CF6" }}>LUC {rLucScore}</span>
                 </div>
-                {canDelete && (
-                  <button onClick={() => { if (window.confirm("Supprimer ce call ?")) deleteReview(r.id); }} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 12, padding: "8px 14px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Supprimer</button>
-                )}
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 16 }}>
+                {CRITERIA.map(s => (
+                  <div key={s.section} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 4px" }}>
+                    <div style={{ fontSize: 14, marginBottom: 3 }}>{s.icon}</div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: s.color }}>{sectionPct(s, r.scores||{})}%</div>
+                    <div style={{ fontSize: 7, color: V.s5, textTransform: "uppercase" }}>{s.section.split(" ")[0]}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div style={card()}>
-              <span style={sLabel}>Scores par section</span>
-              {CRITERIA.map(s => <SectionBar key={s.section} label={s.section} pct={sectionPct(s, r.scores || {})} color={s.color} icon={s.icon}/>)}
-            </div>
-
+            {/* Marc verdict */}
             {r.globalComment && (
-              <div style={card()}>
-                <span style={sLabel}>🎯 Verdict du coach</span>
-                <p style={{ color: V.bg1, fontSize: 14, lineHeight: 1.8, margin: "0 0 16px" }}>{r.globalComment}</p>
+              <div style={{ ...card(), border: `1px solid ${V.neon}20`, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${V.neon}15`, border: `2px solid ${V.neon}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🧑‍💼</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: V.white }}>Marc</div>
+                    <div style={{ fontSize: 10, color: V.neon, letterSpacing: "1px" }}>Coach Sales · Vertuoza</div>
+                  </div>
+                </div>
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
+                  <p style={{ color: V.bg1, fontSize: 13.5, lineHeight: 1.9, margin: 0 }}>{r.globalComment}</p>
+                </div>
                 {(r.globalStrengths?.length > 0 || r.globalImprovements?.length > 0) && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {r.globalStrengths?.length > 0 && <div>
-                      <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>✅ Forces</div>
-                      {r.globalStrengths.map((s, i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 6, borderLeft: "2px solid #10B981" }}>{s}</div>)}
+                      <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>✅ Ce que t'as bien fait</div>
+                      {r.globalStrengths.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "5px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 5, borderLeft: "2px solid #10B981" }}>{s}</div>)}
                     </div>}
                     {r.globalImprovements?.length > 0 && <div>
-                      <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🚀 Axes prioritaires</div>
-                      {r.globalImprovements.map((s, i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 6, borderLeft: `2px solid ${V.orange}` }}>{s}</div>)}
+                      <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>🎯 Ce qu'on travaille</div>
+                      {r.globalImprovements.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "5px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 5, borderLeft: `2px solid ${V.orange}` }}>{s}</div>)}
                     </div>}
                   </div>
                 )}
               </div>
             )}
 
-            {CRITERIA.map(section => (
-              <div key={section.section} style={card()}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <span style={{ fontSize: 18 }}>{section.icon}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: section.color, textTransform: "uppercase", letterSpacing: "1.2px" }}>{section.section}</span>
-                  <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: section.color }}>{sectionPct(section, r.scores || {})}%</span>
+            {/* Miroir si autoéval */}
+            {r.selfScores && rRated.length > 0 && (
+              <div style={{ ...card(), border: "1px solid #8B5CF650", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>🪞</span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: V.white }}>Miroir — Toi vs Marc</div>
+                      <div style={{ fontSize: 10, color: V.s5 }}>Ta lucidité sur ce call</div>
+                    </div>
+                  </div>
+                  {rLucScore !== null && rLucScore !== undefined && (
+                    <div style={{ background: "#8B5CF620", border: "1px solid #8B5CF650", borderRadius: 10, padding: "6px 14px", textAlign: "center" }}>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: "#8B5CF6" }}>{rLucScore}</div>
+                      <div style={{ fontSize: 8, color: V.s5, textTransform: "uppercase" }}>Score LUC</div>
+                    </div>
+                  )}
                 </div>
-                {section.items.map(c => <CriterionRow key={c.id} criterion={c} scores={r.scores||{}} justifications={r.justifications||{}} expertScripts={r.expertScripts||{}} levelUp={r.levelUp||{}} sectionColor={section.color} readOnly/>)}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+                  {[{label:"Aligné",value:rAligned,color:"#10B981",icon:"🎯"},{label:"Surestimé",value:rOverrated,color:"#EF4444",icon:"⚠️"},{label:"Sous-estimé",value:rUnderrated,color:"#F59E0B",icon:"💪"}].map(k => (
+                    <div key={k.label} style={{ textAlign:"center", background:`${k.color}08`, border:`1px solid ${k.color}25`, borderRadius:10, padding:"8px 6px" }}>
+                      <div style={{ fontSize:16 }}>{k.icon}</div>
+                      <div style={{ fontSize:18, fontWeight:900, color:k.color }}>{k.value}</div>
+                      <div style={{ fontSize:9, color:V.s5 }}>{k.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Top gaps */}
+                {rRated.filter(id => Math.abs((r.selfScores[id]||0)-(r.scores[id]||0)) >= 2).slice(0,3).map(id => {
+                  const c = CRITERIA.flatMap(s=>s.items).find(ci=>ci.id===id);
+                  const diff = (r.selfScores[id]||0) - (r.scores[id]||0);
+                  const sdrSc = SCORES.find(s=>s.value===(r.selfScores[id]||0));
+                  const coachSc = SCORES.find(s=>s.value===(r.scores[id]||0));
+                  const col = diff > 0 ? "#EF4444" : "#F59E0B";
+                  return (
+                    <div key={id} style={{ background:`${col}08`, border:`1px solid ${col}20`, borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
+                      <div style={{ fontSize:12, fontWeight:600, color:V.white, marginBottom:4 }}>{c?.label}</div>
+                      <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:6 }}>
+                        <span style={{ fontSize:10, background:`${sdrSc?.color}20`, color:sdrSc?.color, padding:"2px 8px", borderRadius:10, fontWeight:700 }}>Toi: {sdrSc?.label}</span>
+                        <span style={{ color:col }}>→</span>
+                        <span style={{ fontSize:10, background:`${coachSc?.color}20`, color:coachSc?.color, padding:"2px 8px", borderRadius:10, fontWeight:700 }}>Marc: {coachSc?.label}</span>
+                      </div>
+                      <div style={{ fontSize:11, color:col, fontStyle:"italic" }}>
+                        {diff > 0 ? "⚠️ Angle mort identifié" : "💪 Tu te sous-estimais"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Critères avec Marc te parle */}
+            {CRITERIA.map(section => (
+              <div key={section.section} style={{ ...card(), marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 20 }}>{section.icon}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: section.color, textTransform: "uppercase", letterSpacing: "1px" }}>{section.section}</span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: section.color }}>{sectionPct(section, r.scores||{})}%</span>
+                </div>
+                {section.items.map(c => {
+                  const sc = SCORES.find(s => s.value === (r.scores?.[c.id]||0));
+                  const selfSc = r.selfScores ? SCORES.find(s => s.value === (r.selfScores[c.id]||0)) : null;
+                  const just = r.justifications?.[c.id];
+                  const expert = r.expertScripts?.[c.id];
+                  const up = r.levelUp?.[c.id];
+                  return (
+                    <div key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: 14, marginBottom: 14 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: section.color, flexShrink: 0 }}/>
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: V.white }}>{c.label}</span>
+                        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                          {selfSc && selfSc.value > 0 && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>Toi: {selfSc.label}</span>}
+                          {sc && sc.value > 0 && <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 10, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>Marc: {sc.label}</span>}
+                        </div>
+                      </div>
+                      {just && (
+                        <div style={{ marginLeft: 13, marginBottom: 8 }}>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${V.neon}15`, border: `1.5px solid ${V.neon}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>🧑‍💼</div>
+                            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "0 10px 10px 10px", padding: "9px 12px", flex: 1 }}>
+                              <div style={{ fontSize: 8, color: V.neon, fontWeight: 700, marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Marc te parle</div>
+                              <div style={{ fontSize: 12.5, color: V.bg1, lineHeight: 1.8 }}>{just}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {expert && (
+                        <div style={{ marginLeft: 13, marginBottom: 6 }}>
+                          <div style={{ background: `${V.blue}12`, border: `1px solid ${V.neon}20`, borderRadius: 8, padding: "8px 12px" }}>
+                            <div style={{ fontSize: 8, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 }}>🎙️ Ce que Marc aurait dit</div>
+                            <div style={{ fontSize: 12, color: V.bg1, lineHeight: 1.7, fontStyle: "italic" }}>"{expert}"</div>
+                          </div>
+                        </div>
+                      )}
+                      {up?.scripts?.length > 0 && (
+                        <div style={{ marginLeft: 13 }}>
+                          <div style={{ fontSize: 8, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 }}>💬 Phrases à utiliser</div>
+                          {up.scripts.map((s,i) => (
+                            <div key={i} style={{ background: `${V.orange}08`, border: `1px solid ${V.orange}20`, borderRadius: 7, padding: "6px 10px", fontSize: 11, color: V.s5, fontStyle: "italic", marginBottom: 4, lineHeight: 1.5 }}>
+                              <span style={{ color: V.orange, fontWeight: 800, fontStyle: "normal" }}>{i+1}. </span>"{s}"
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </>);
