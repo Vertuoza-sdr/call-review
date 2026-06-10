@@ -1570,59 +1570,114 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
         {/* ══ DASHBOARD ══════════════════════════════════════════════════════════ */}
         {page === "dashboard" && (<>
 
-          {/* Daily goal */}
-          <DailyCounter count={todayReviews}/>
+          {reviews.length === 0 ? (
+            /* Empty state — call to action */
+            <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: 64, marginBottom: 20, filter: `drop-shadow(0 0 20px ${V.orange}60)` }}>🎙️</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: V.white, letterSpacing: "-1px", marginBottom: 8 }}>Ton premier call t'attend.</div>
+              <div style={{ fontSize: 15, color: V.s5, maxWidth: 360, lineHeight: 1.7, marginBottom: 32 }}>Lance ton analyse, reçois ton coaching personnalisé et rejoins le classement de l'équipe.</div>
+              <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 14, color: V.white, fontWeight: 800, fontSize: 16, padding: "16px 40px", cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.3px", boxShadow: `0 8px 32px ${V.orange}50` }}>🚀 Analyser mon premier call</button>
+            </div>
+          ) : (<>
 
-          {/* KPIs */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 16 }}>
+          {/* ── HEADER JERSEY — identité du Sales ── */}
+          <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", marginBottom: 20, padding: "28px 28px 24px" }}>
+            {/* Fond avec texture terrain */}
+            <div style={{ position: "absolute", inset: 0, background: V.s1 }}/>
+            <svg style={{ position: "absolute", inset: 0, opacity: 0.05 }} width="100%" height="100%">
+              <defs>
+                <pattern id="hex" width="28" height="32" patternUnits="userSpaceOnUse">
+                  <polygon points="14,2 26,8 26,24 14,30 2,24 2,8" fill="none" stroke={V.neon} strokeWidth="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#hex)"/>
+            </svg>
+            {/* Glow accent */}
+            <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%", background: `${V.blue}30`, filter: "blur(60px)", pointerEvents: "none" }}/>
+
+            <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+              {/* Jersey number */}
+              <div style={{ textAlign: "center", flexShrink: 0 }}>
+                <div style={{ fontSize: 72, fontWeight: 900, color: myMedal.color, letterSpacing: "-4px", lineHeight: 1, textShadow: `0 0 40px ${myMedal.color}60` }}>{myAvg || "—"}</div>
+                <div style={{ fontSize: 10, color: myMedal.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: "3px", marginTop: 2 }}>Score moy.</div>
+              </div>
+
+              {/* Infos joueur */}
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>{user.email.split("@")[0]}</div>
+                  <div style={{ background: `${myLevel.color}20`, border: `1px solid ${myLevel.color}50`, borderRadius: 20, padding: "3px 12px", fontSize: 11, fontWeight: 800, color: myLevel.color }}>{myLevel.icon} {myLevel.name}</div>
+                  {isAdmin && <div style={{ background: `${V.neon}15`, border: `1px solid ${V.neon}40`, borderRadius: 20, padding: "3px 12px", fontSize: 10, fontWeight: 800, color: V.neon, letterSpacing: "1px" }}>ADMIN</div>}
+                </div>
+                <div style={{ fontSize: 12, color: V.s5, marginBottom: 10 }}>Vertuoza Sales · {reviews.length} call{reviews.length > 1 ? "s" : ""} analysé{reviews.length > 1 ? "s" : ""}</div>
+                <Stars count={myMedal.stars} color={myMedal.color}/>
+                <div style={{ fontSize: 11, color: myMedal.color, marginTop: 4, fontWeight: 600 }}>{myMedal.icon} {myMedal.label}</div>
+              </div>
+
+              {/* XP progress */}
+              <div style={{ flexShrink: 0, minWidth: 160 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, color: V.s5, textTransform: "uppercase", letterSpacing: "1px" }}>XP</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: myLevel.color }}>{myXP} / {myLevel.max + 1}</span>
+                </div>
+                <div style={{ height: 8, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden", marginBottom: 4 }}>
+                  <div style={{ height: "100%", width: `${Math.min(((myXP - myLevel.min) / (myLevel.max - myLevel.min + 1)) * 100, 100)}%`, background: myLevel.color, borderRadius: 10, boxShadow: `0 0 10px ${myLevel.color}` }}/>
+                </div>
+                {LEVELS.find(l => l.min > myXP) && (
+                  <div style={{ fontSize: 10, color: V.s4 }}>
+                    {LEVELS.find(l => l.min > myXP).min - myXP} XP avant {LEVELS.find(l => l.min > myXP).name}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── COMPTEUR JOURNALIER ── */}
+          <div style={{ marginBottom: 16 }}>
+            <DailyCounter count={todayReviews}/>
+          </div>
+
+          {/* ── KPIs MINI ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
             {[
-              { label: "Calls analysés", value: reviews.length, icon: "🎙️", color: V.neon },
-              { label: "Score moyen", value: myAvg ? myAvg + "%" : "—", icon: myMedal.icon, color: myMedal.color },
-              { label: "Cette semaine", value: reviews.filter(r => { if (!r.createdAt) return false; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); const now = new Date(); return (now - d) < 7 * 86400000; }).length, icon: "📅", color: V.orange },
-              { label: "Objectifs/jour atteints", value: (() => { const days = {}; reviews.forEach(r => { if (!r.createdAt) return; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); const k = d.toISOString().slice(0,10); days[k] = (days[k]||0)+1; }); return Object.values(days).filter(v => v >= DAILY_GOAL).length + "j"; })(), icon: "🏆", color: "#10B981" },
+              { label: "Cette semaine", value: reviews.filter(r => { if (!r.createdAt) return false; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); return (new Date()-d) < 7*86400000; }).length, icon: "📅", color: V.blue, suffix: " calls" },
+              { label: "Meilleur score", value: Math.max(...reviews.map(r => r.globalPct||0)), icon: "⭐", color: "#FFD700", suffix: "%" },
+              { label: "LUC moyen", value: (() => { const l = reviews.filter(r=>r.lucScore!=null); return l.length ? Math.round(l.reduce((a,r)=>a+(r.lucScore||0),0)/l.length) : "—"; })(), icon: "🧠", color: "#8B5CF6", suffix: l => typeof l === "number" ? "" : "" },
+              { label: "Obj. validés", value: objectives.filter(o=>o.status==="validated").length, icon: "✅", color: "#10B981", suffix: "" },
             ].map(k => (
-              <div key={k.label} style={{ ...card(), marginBottom: 0, textAlign: "center", padding: "20px 12px" }}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>{k.icon}</div>
-                <div style={{ fontSize: 24, fontWeight: 800, color: k.color }}>{k.value}</div>
-                <div style={{ fontSize: 10, color: V.s5, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.8px" }}>{k.label}</div>
+              <div key={k.label} style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 14, padding: "16px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: k.color, letterSpacing: "-0.5px" }}>{k.value}{typeof k.suffix === "string" ? k.suffix : ""}</div>
+                <div style={{ fontSize: 10, color: V.s5, marginTop: 3, textTransform: "uppercase", letterSpacing: "0.8px" }}>{k.label}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+          {/* ── CARTE + LEADERBOARD ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, marginBottom: 20, alignItems: "start" }}>
             {/* Carte FIFA */}
-            <div style={card()}>
-              <span style={sLabel}>Ma carte SDR</span>
-              <FifaCard
-                name={user.email.split("@")[0]}
-                avg={myAvg}
-                medal={myMedal}
-                reviews={reviews}
-                allReviews={allReviews}
-                userId={user.uid}
-              />
-            </div>
+            <FifaCard name={user.email.split("@")[0]} avg={myAvg} medal={myMedal} reviews={reviews} allReviews={allReviews} userId={user.uid}/>
 
-            {/* Leaderboard */}
-            <div style={card()}>
-              <span style={sLabel}>🏆 Classement équipe</span>
-              {leaderboard.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Aucun call analysé pour l'instant.</div>}
+            {/* Leaderboard style match */}
+            <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, height: "100%", boxSizing: "border-box" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 16 }}>🏆</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Classement équipe</span>
+              </div>
+              {leaderboard.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Aucun call pour l'instant.</div>}
               {leaderboard.map((s, i) => {
                 const m = getMedal(s.avg);
-                const isMe = s.name === (user.email.split("@")[0]);
+                const isMe = s.name === user.email.split("@")[0];
+                const barW = Math.max((s.avg / 100) * 100, 4);
                 return (
-                  <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, marginBottom: 6, background: isMe ? `${V.blue}20` : "rgba(255,255,255,0.03)", border: `1px solid ${isMe ? `${V.blue}40` : "transparent"}` }}>
-                    <span style={{ fontSize: 18, width: 24, textAlign: "center" }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : <span style={{ color: V.s4, fontSize: 12 }}>#{i+1}</span>}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: isMe ? 700 : 500, color: isMe ? V.neon : V.white }}>{s.name}{isMe ? " (toi)" : ""}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                        <Stars count={m.stars} color={m.color}/>
-                        <span style={{ fontSize: 10, color: V.s5 }}>{s.count} call{s.count > 1 ? "s" : ""}</span>
-                      </div>
+                  <div key={s.name} style={{ marginBottom: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, width: 22, textAlign: "center", flexShrink: 0 }}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{ fontSize: 10, color: V.s4 }}>#{i+1}</span>}</span>
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: isMe ? 800 : 500, color: isMe ? V.neon : V.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}{isMe ? " ←" : ""}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: m.color, flexShrink: 0 }}>{s.avg}%</span>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: m.color }}>{s.avg}%</div>
-                      <div style={{ fontSize: 10, color: m.color }}>{m.label} {m.icon}</div>
+                    <div style={{ marginLeft: 30, height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${barW}%`, background: isMe ? V.neon : m.color, borderRadius: 4, transition: "width .8s ease", opacity: isMe ? 1 : 0.7 }}/>
                     </div>
                   </div>
                 );
@@ -1630,111 +1685,102 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             </div>
           </div>
 
-          {/* Graph évolution semaine */}
-          {reviews.length >= 3 && (() => {
+          {/* ── GRAPHE ÉVOLUTION ── */}
+          {reviews.length >= 2 && (() => {
             const last10 = reviews.slice(0, 10).reverse();
+            const maxPct = Math.max(...last10.map(r => r.globalPct||0));
+            const minPct = Math.min(...last10.map(r => r.globalPct||0));
+            const H = 100; const W_BAR = 1 / last10.length;
             return (
-              <div style={card()}>
-                <span style={sLabel}>📈 Évolution de tes scores</span>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80, paddingTop: 8 }}>
+              <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 16 }}>📈</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Forme récente</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Sparkline values={last10.map(r=>r.globalPct||0)} color={V.neon} width={100} height={28}/>
+                    {(() => { const trend = (last10[last10.length-1]?.globalPct||0) - (last10[0]?.globalPct||0); return <span style={{ fontSize: 12, fontWeight: 700, color: trend >= 0 ? "#10B981" : "#EF4444" }}>{trend >= 0 ? "↗" : "↘"} {Math.abs(trend)}%</span>; })()}
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 90 }}>
                   {last10.map((r, i) => {
                     const pct = r.globalPct || 0;
                     const m = getMedal(pct);
+                    const h = Math.max(((pct - Math.max(minPct-10,0)) / (Math.min(maxPct+10,100) - Math.max(minPct-10,0))) * 80, 8);
+                    const isLast = i === last10.length - 1;
                     return (
-                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                         <div style={{ fontSize: 9, color: m.color, fontWeight: 700 }}>{pct}%</div>
-                        <div style={{ width: "100%", height: `${Math.max(pct * 0.6, 4)}px`, background: m.color, borderRadius: "4px 4px 0 0", transition: "height .5s ease", opacity: 0.85 }}/>
-                        <div style={{ fontSize: 8, color: V.s4, textAlign: "center", lineHeight: 1.2 }}>{r.prospectName?.slice(0,6) || "—"}</div>
+                        <div style={{ width: "100%", height: `${h}px`, background: isLast ? m.color : `${m.color}50`, borderRadius: "4px 4px 0 0", transition: "height .5s ease", position: "relative", overflow: "hidden" }}>
+                          {isLast && <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.1)", animation: "pulse 2s ease-in-out infinite" }}/>}
+                        </div>
+                        <div style={{ fontSize: 8, color: V.s4, textAlign: "center", lineHeight: 1.2, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.prospectName?.slice(0,5) || "—"}</div>
                       </div>
                     );
                   })}
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-                  {[{label:"🥉 Bronze",t:55},{label:"🥈 Silver",t:70},{label:"🏆 Gold",t:85}].map(g => (
-                    <div key={g.label} style={{ fontSize: 10, color: V.s4 }}>{g.label} ≥{g.t}%</div>
-                  ))}
-                </div>
               </div>
             );
           })()}
 
-          {/* Objectifs coach */}
-          {objectives.length > 0 && (() => {
-            const pending = objectives.filter(o => o.status === "pending").slice(0, 3);
-            const validated = objectives.filter(o => o.status === "validated").length;
-            const failed = objectives.filter(o => o.status === "failed").length;
-            const priorityColor = { high: V.orange, medium: V.blue, low: V.s5 };
-            const priorityLabel = { high: "Priorité haute", medium: "Priorité moyenne", low: "Priorité basse" };
-            return (
-              <div style={card()}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <div>
-                    <span style={sLabel}>🎯 Objectifs Coach — Prochain call</span>
-                    <div style={{ display: "flex", gap: 12, marginTop: -4 }}>
-                      <span style={{ fontSize: 11, color: "#10B981" }}>✅ {validated} validés</span>
-                      <span style={{ fontSize: 11, color: "#EF4444" }}>❌ {failed} ratés</span>
-                      <span style={{ fontSize: 11, color: V.orange }}>⏳ {pending.length} en cours</span>
+          {/* ── OBJECTIFS EN COURS ── */}
+          {pendingObjectives.length > 0 && (
+            <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 16 }}>🎯</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Objectifs pour le prochain call</span>
+                <span style={{ marginLeft: "auto", background: `${V.orange}20`, border: `1px solid ${V.orange}40`, borderRadius: 20, padding: "2px 10px", fontSize: 11, color: V.orange, fontWeight: 700 }}>{pendingObjectives.length}</span>
+              </div>
+              {pendingObjectives.slice(0,3).map((obj, i) => {
+                const pc = { high: V.orange, medium: V.blue, low: V.s5 }[obj.priority] || V.s5;
+                return (
+                  <div key={obj.id} style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: i < Math.min(pendingObjectives.length,3)-1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${pc}20`, border: `1.5px solid ${pc}50`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: pc, flexShrink: 0 }}>{i+1}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 2 }}>{obj.title}</div>
+                      <div style={{ fontSize: 11, color: V.s5, lineHeight: 1.5 }}>{obj.description}</div>
                     </div>
                   </div>
-                </div>
-                {pending.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Aucun objectif en cours — analyse un call pour en générer de nouveaux !</div>}
-                {pending.map((obj, i) => (
-                  <div key={obj.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${priorityColor[obj.priority] || V.border}30`, borderLeft: `3px solid ${priorityColor[obj.priority] || V.border}`, borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${priorityColor[obj.priority] || V.border}20`, border: `1.5px solid ${priorityColor[obj.priority] || V.border}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: priorityColor[obj.priority] || V.s5, flexShrink: 0 }}>{i+1}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: V.white }}>{obj.title}</span>
-                          <span style={{ fontSize: 9, color: priorityColor[obj.priority] || V.s5, background: `${priorityColor[obj.priority] || V.border}15`, padding: "2px 8px", borderRadius: 20, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>{priorityLabel[obj.priority] || obj.priority}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: V.s5, lineHeight: 1.6, marginBottom: 6 }}>{obj.description}</div>
-                        {obj.example && (
-                          <div style={{ background: `${V.neon}10`, border: `1px solid ${V.neon}20`, borderRadius: 8, padding: "6px 10px", fontSize: 11, color: V.neon, fontStyle: "italic" }}>
-                            💬 "{obj.example}"
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-
-          {/* Badges écussons */}
-          {reviews.length > 0 && (() => {
-            const earnedBadges = BADGES.filter(b => b.condition(reviews, objectives));
-            const lockedBadges = BADGES.filter(b => !b.condition(reviews, objectives));
-            return (
-              <div style={card()}>
-                <span style={sLabel}>🛡️ Mes écussons — {earnedBadges.length}/{BADGES.length} débloqués</span>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                  {earnedBadges.map(b => (
-                    <div key={b.id} title={b.desc} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 12px", background: "rgba(255,255,255,0.06)", border: `1.5px solid ${V.neon}40`, borderRadius: 12, minWidth: 70, cursor: "default" }}>
-                      <div style={{ fontSize: 28, filter: `drop-shadow(0 0 8px ${V.neon}80)` }}>{b.icon}</div>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: V.neon, textAlign: "center", letterSpacing: "0.3px" }}>{b.name}</div>
-                    </div>
-                  ))}
-                  {lockedBadges.map(b => (
-                    <div key={b.id} title={`🔒 ${b.desc}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 12px", background: "rgba(255,255,255,0.02)", border: `1.5px solid rgba(255,255,255,0.06)`, borderRadius: 12, minWidth: 70, cursor: "default", opacity: 0.4 }}>
-                      <div style={{ fontSize: 28, filter: "grayscale(1)" }}>{b.icon}</div>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: V.s4, textAlign: "center" }}>{b.name}</div>
-                    </div>
-                  ))}
-                </div>
-                {earnedBadges.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Analyse des calls pour débloquer tes premiers écussons !</div>}
-              </div>
-            );
-          })()}
-
-          {reviews.length === 0 && (            <div style={{ ...card(), textAlign: "center", padding: 60 }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aucun call analysé</div>
-              <div style={{ color: V.s5, fontSize: 14, marginBottom: 24 }}>Lance ta première analyse pour débloquer ton dashboard.</div>
-              <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 12, color: V.white, fontWeight: 700, fontSize: 14, padding: "12px 28px", cursor: "pointer", fontFamily: "inherit" }}>🚀 Analyser mon premier call</button>
+                );
+              })}
+              <button onClick={() => setPage("objectives")} style={{ width: "100%", marginTop: 12, background: "rgba(255,255,255,0.04)", border: `1px solid ${V.border}`, borderRadius: 10, color: V.s5, fontSize: 12, fontWeight: 600, padding: "9px", cursor: "pointer", fontFamily: "inherit" }}>Voir tous les objectifs →</button>
             </div>
           )}
+
+          {/* ── BADGES ── */}
+          {reviews.length > 0 && (() => {
+            const earned = BADGES.filter(b => b.condition(reviews, objectives));
+            const locked = BADGES.filter(b => !b.condition(reviews, objectives));
+            return (
+              <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                  <span style={{ fontSize: 16 }}>🛡️</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Mes écussons</span>
+                  <span style={{ marginLeft: "auto", fontSize: 11, color: V.s5 }}>{earned.length}/{BADGES.length}</span>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {earned.map(b => (
+                    <div key={b.id} title={b.desc} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 12px", background: `${V.neon}08`, border: `1.5px solid ${V.neon}30`, borderRadius: 12, minWidth: 64, transition: "transform .2s" }}
+                      onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="none"}>
+                      <div style={{ fontSize: 26, filter: `drop-shadow(0 0 6px ${V.neon}60)` }}>{b.icon}</div>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: V.neon, textAlign: "center", letterSpacing: "0.3px" }}>{b.name}</div>
+                    </div>
+                  ))}
+                  {locked.slice(0,4).map(b => (
+                    <div key={b.id} title={`🔒 ${b.desc}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "10px 12px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.06)", borderRadius: 12, minWidth: 64, opacity: 0.35, filter: "grayscale(1)" }}>
+                      <div style={{ fontSize: 26 }}>{b.icon}</div>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: V.s4, textAlign: "center" }}>{b.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          </>)}
         </>)}
+
 
         {/* ══ NOUVEAU CALL ════════════════════════════════════════════════════════ */}
         {page === "new" && (<>
