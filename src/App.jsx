@@ -50,6 +50,39 @@ const CRITERIA = [
 ];
 
 const ALL_IDS = CRITERIA.flatMap(s => s.items.map(i => i.id));
+
+// Retourne CRITERIA avec labels/tips/sections traduits
+const getCriteria = (t) => [
+  { section: t("sec_opening"), color: V.orange, icon: "🎯", items: [
+    { id: "tone",    label: t("c_tone"),    tip: t("c_tone_tip") },
+    { id: "rapport", label: t("c_rapport"), tip: t("c_rapport_tip") },
+    { id: "rhythm",  label: t("c_rhythm"),  tip: t("c_rhythm_tip") },
+    { id: "opening", label: t("c_opening"), tip: t("c_opening_tip") },
+  ]},
+  { section: t("sec_discovery"), color: V.blue, icon: "🔍", items: [
+    { id: "flow",      label: t("c_flow"),      tip: t("c_flow_tip") },
+    { id: "talkratio", label: t("c_talkratio"), tip: t("c_talkratio_tip") },
+    { id: "structure", label: t("c_structure"), tip: t("c_structure_tip") },
+    { id: "tools",     label: t("c_tools"),     tip: t("c_tools_tip") },
+    { id: "decision",  label: t("c_decision"),  tip: t("c_decision_tip") },
+    { id: "timing",    label: t("c_timing"),    tip: t("c_timing_tip") },
+    { id: "quantify",  label: t("c_quantify"),  tip: t("c_quantify_tip") },
+  ]},
+  { section: t("sec_pitch"), color: "#8B5CF6", icon: "💬", items: [
+    { id: "objections", label: t("c_objections"), tip: t("c_objections_tip") },
+    { id: "sector",     label: t("c_sector"),     tip: t("c_sector_tip") },
+    { id: "trade",      label: t("c_trade"),      tip: t("c_trade_tip") },
+    { id: "vocab",      label: t("c_vocab"),      tip: t("c_vocab_tip") },
+    { id: "cases",      label: t("c_cases"),      tip: t("c_cases_tip") },
+    { id: "benefits",   label: t("c_benefits"),   tip: t("c_benefits_tip") },
+  ]},
+  { section: t("sec_closing"), color: "#10B981", icon: "🚀", items: [
+    { id: "control",    label: t("c_control"),    tip: t("c_control_tip") },
+    { id: "commitment", label: t("c_commitment"), tip: t("c_commitment_tip") },
+    { id: "energy",     label: t("c_energy"),     tip: t("c_energy_tip") },
+  ]},
+];
+
 const SCORES = [
   { value: 0, label: "—",         color: V.s4 },
   { value: 1, label: "Manquant",  color: "#EF4444" },
@@ -127,6 +160,30 @@ const TR = {
     feeling_bad: "⚠️ Ce que tu aurais dû faire différemment", feeling_bad_ph: "Ex: J'ai été trop rapide sur le pitch, je n'ai pas quantifié le problème en euros...",
     feeling_general: "🎯 Ressenti général sur ce call",
     feeling_fire: "En feu", feeling_solid: "Solide", feeling_avg: "Moyen", feeling_frustrating: "Frustrant", feeling_improve: "À améliorer",
+    score_0: "—", score_1: "Manquant", score_2: "Partiel", score_3: "Bon", score_4: "Excellent",
+    // Critères — sections
+    sec_opening: "OUVERTURE & POSTURE", sec_discovery: "DISCOVERY & QUALIFICATION", sec_pitch: "PITCH & OBJECTIONS", sec_closing: "CLOSING & ÉNERGIE",
+    // Critères — labels & tips
+    c_tone: "Ton assuré et professionnel dès le début", c_tone_tip: "Voix posée, rythme maîtrisé, pas de 'euh' excessifs — posture d'expert crédible.",
+    c_rapport: "Création d'un rapport humain rapide", c_rapport_tip: "Utilise le prénom, connaît le secteur, évite le ton trop corporate.",
+    c_rhythm: "Rythme adapté au prospect", c_rhythm_tip: "Ni trop rapide, ni trop lent. Adapté à un entrepreneur du bâtiment occupé.",
+    c_opening: "Ouverture claire, engageante et différenciante", c_opening_tip: "Accroche ancrée dans une vraie douleur terrain : devis, chantier, facturation...",
+    c_flow: "Enchaînement fluide des étapes", c_flow_tip: "Intro → découverte → qualification → pitch → next step. Pas de rupture.",
+    c_talkratio: "Ratio de parole maîtrisé (40/60)", c_talkratio_tip: "40% Sales / 60% prospect. Trop parler = monologue. Trop peu = call sans direction.",
+    c_structure: "Identification de la structure entreprise", c_structure_tip: "Taille, nb employés, volume chantiers, organisation interne.",
+    c_tools: "Compréhension des outils & irritants", c_tools_tip: "Excel, papier, WhatsApp, ERP concurrent ? Quels irritants quotidiens ?",
+    c_decision: "Identification du décisionnaire", c_decision_tip: "Patron, associé, conjoint, admin ? Qui signe ? Qui bloque ?",
+    c_timing: "Qualification du timing et déclencheur", c_timing_tip: "Croissance, problème facturation, perte chantier, nouvel associé…",
+    c_quantify: "Quantification chiffrée du problème", c_quantify_tip: "Heures perdues, devis ratés, argent laissé sur la table. Le prospect doit SENTIR le coût.",
+    c_objections: "Gestion des objections sans se déstabiliser", c_objections_tip: "Prix, 'pas le moment', 'on a déjà un outil'… Rebondir avec calme et méthode.",
+    c_sector: "Réponses ancrées dans le bâtiment", c_sector_tip: "Cite des clients similaires. Pas de pitch générique SaaS.",
+    c_trade: "Discours adapté au métier précis", c_trade_tip: "Électricien ≠ plombier ≠ maçon. Les douleurs changent selon le corps de métier.",
+    c_vocab: "Vocabulaire métier BTP maîtrisé", c_vocab_tip: "Devis, situation de travaux, avenant, sous-traitants, CCTP, attachement...",
+    c_cases: "Vertuoza ancré dans des cas terrain concrets", c_cases_tip: "'Sur chantier', 'le soir', 'technicien qui pointe', 'devis signé en 10 min'...",
+    c_benefits: "Bénéfices mis en avant (pas features)", c_benefits_tip: "Temps récupéré, argent gagné, stress en moins. PAS 'on a un module de facturation'.",
+    c_control: "Contrôle du call de bout en bout", c_control_tip: "Le Sales guide, pose les questions, fixe le rythme. Il ne subit pas.",
+    c_commitment: "Engagement concret obtenu", c_commitment_tip: "Date démo, email reçu, décisionnaire impliqué. Prochaine étape claire.",
+    c_energy: "Conviction et énergie projetées", c_energy_tip: "Le prospect doit sentir un expert passionné — pas quelqu'un qui récite un script.",
     back: "← Retour", launch_analysis: "🚀 Lancer l'analyse du coach",
     autosave_note: "✅ Sauvegarde automatique · Résultats en ~30 secondes",
     // Review
@@ -228,6 +285,30 @@ const TR = {
     feeling_bad: "⚠️ Wat je anders had moeten doen", feeling_bad_ph: "Bv: Ik was te snel met de pitch, ik heb het probleem niet in euro's gekwantificeerd...",
     feeling_general: "🎯 Algemeen gevoel over dit gesprek",
     feeling_fire: "Top vorm", feeling_solid: "Solide", feeling_avg: "Gemiddeld", feeling_frustrating: "Frustrerend", feeling_improve: "Te verbeteren",
+    score_0: "—", score_1: "Ontbreekt", score_2: "Deels", score_3: "Goed", score_4: "Uitstekend",
+    // Criteria — secties
+    sec_opening: "OPENING & HOUDING", sec_discovery: "DISCOVERY & KWALIFICATIE", sec_pitch: "PITCH & BEZWAREN", sec_closing: "CLOSING & ENERGIE",
+    // Criteria — labels & tips
+    c_tone: "Zelfverzekerde en professionele toon vanaf het begin", c_tone_tip: "Rustige stem, gecontroleerd tempo, geen overmatig 'eh' — geloofwaardige expertpositie.",
+    c_rapport: "Snel een menselijke band opbouwen", c_rapport_tip: "Gebruikt voornaam, kent de sector, vermijdt te corporate toon.",
+    c_rhythm: "Tempo aangepast aan de prospect", c_rhythm_tip: "Niet te snel, niet te traag. Aangepast aan een drukke bouwondernemer.",
+    c_opening: "Duidelijke, boeiende en onderscheidende opening", c_opening_tip: "Opening verankerd in een echt praktijkprobleem: offertes, werf, facturatie...",
+    c_flow: "Vloeiende opbouw van de stappen", c_flow_tip: "Intro → discovery → kwalificatie → pitch → next step. Geen breuk.",
+    c_talkratio: "Beheerste spreekverhouding (40/60)", c_talkratio_tip: "40% Sales / 60% prospect. Te veel praten = monoloog. Te weinig = gesprek zonder richting.",
+    c_structure: "Identificatie van de bedrijfsstructuur", c_structure_tip: "Grootte, aantal medewerkers, aantal werven, interne organisatie.",
+    c_tools: "Begrip van tools & irritaties", c_tools_tip: "Excel, papier, WhatsApp, concurrerend ERP? Welke dagelijkse irritaties?",
+    c_decision: "Identificatie van de beslisser", c_decision_tip: "Baas, partner, echtgeno(o)t(e), administratie? Wie tekent? Wie blokkeert?",
+    c_timing: "Kwalificatie van timing en aanleiding", c_timing_tip: "Groei, factuurprobleem, verloren werf, nieuwe partner…",
+    c_quantify: "Cijfermatige kwantificering van het probleem", c_quantify_tip: "Verloren uren, gemiste offertes, geld op de tafel. De prospect moet de kost VOELEN.",
+    c_objections: "Bezwaren beheren zonder uit balans te raken", c_objections_tip: "Prijs, 'geen goed moment', 'we hebben al een tool'… Kalm en methodisch reageren.",
+    c_sector: "Antwoorden verankerd in de bouwsector", c_sector_tip: "Verwijst naar gelijkaardige klanten. Geen generieke SaaS-pitch.",
+    c_trade: "Verhaal aangepast aan het specifieke vak", c_trade_tip: "Elektricien ≠ loodgieter ≠ metselaar. De pijnpunten verschillen per vakgebied.",
+    c_vocab: "Beheersing van bouwvakjargon", c_vocab_tip: "Offerte, werfsituatie, bijakte, onderaannemers, lastenboek, opmeting...",
+    c_cases: "Vertuoza verankerd in concrete praktijkcases", c_cases_tip: "'Op de werf', 'in de avond', 'technieker die inklokt', 'offerte getekend in 10 min'...",
+    c_benefits: "Voordelen benadrukt (geen features)", c_benefits_tip: "Tijdswinst, geld verdiend, minder stress. NIET 'we hebben een facturatiemodule'.",
+    c_control: "Volledige controle over het gesprek", c_control_tip: "De Sales leidt, stelt vragen, bepaalt het tempo. Hij ondergaat niet.",
+    c_commitment: "Concreet engagement behaald", c_commitment_tip: "Demo-afspraak, e-mail ontvangen, beslisser betrokken. Duidelijke volgende stap.",
+    c_energy: "Overtuiging en energie uitstralen", c_energy_tip: "De prospect moet een gepassioneerde expert voelen — niet iemand die een script opleest.",
     back: "← Terug", launch_analysis: "🚀 Start coachanalyse",
     autosave_note: "✅ Automatisch opgeslagen · Resultaten binnen ~30 sec",
     no_analysis: "Geen actieve analyse",
@@ -880,7 +961,7 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId, t }) {
             </div>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize:10,color:V.s5,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",marginBottom:12 }}>Performance par section</div>
-              {[{label:"Ouverture & Posture",sIdx:0,icon:"🎯"},{label:"Discovery & Qualification",sIdx:1,icon:"🔍"},{label:"Pitch & Objections",sIdx:2,icon:"💬"},{label:"Closing & Énergie",sIdx:3,icon:"🚀"}].map(s => {
+              {[{label:t("sec_opening"),sIdx:0,icon:"🎯"},{label:t("sec_discovery"),sIdx:1,icon:"🔍"},{label:t("sec_pitch"),sIdx:2,icon:"💬"},{label:t("sec_closing"),sIdx:3,icon:"🚀"}].map(s => {
                 const val = getStat(s.sIdx); const m = getMedal(val);
                 return (
                   <div key={s.sIdx} style={{ marginBottom:10 }}>
@@ -1275,6 +1356,7 @@ export default function App() {
     return typeof val === "function" ? val(...args) : val;
   };
   const changeLang = (l) => { setLang(l); localStorage.setItem("vertuoza_lang", l); };
+  const TCRIT = getCriteria(t);
 
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -2070,7 +2152,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
               </div>
 
               {/* Notes par section */}
-              {CRITERIA.map(section => (
+              {TCRIT.map(section => (
                 <div key={section.section} style={{ marginBottom: 20 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                     <span style={{ fontSize: 16 }}>{section.icon}</span>
@@ -2084,7 +2166,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                           {SCORES.map(s => (
                             <button key={s.value} onClick={() => setSelfScores(prev => ({...prev, [c.id]: s.value}))}
                               style={{ background: selfScores[c.id] === s.value ? s.color : "rgba(255,255,255,0.06)", border: `1.5px solid ${selfScores[c.id] === s.value ? s.color : "rgba(255,255,255,0.12)"}`, color: selfScores[c.id] === s.value ? "#fff" : V.s5, borderRadius: 20, padding: "3px 10px", fontSize: 10, fontFamily: "inherit", cursor: "pointer", fontWeight: selfScores[c.id] === s.value ? 700 : 400, transition: "all .15s", whiteSpace: "nowrap" }}>
-                              {s.label}
+                              {t(`score_${s.value}`)}
                             </button>
                           ))}
                         </div>
@@ -2168,7 +2250,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             );
 
             const m = getMedal(displayPct);
-            const allIds = CRITERIA.flatMap(s => s.items.map(i => i.id));
+            const allIds = TCRIT.flatMap(s => s.items.map(i => i.id));
             const rated = allIds.filter(id => (displaySelfScores[id]??0) > 0 && (displayScores[id]??0) > 0);
             const aligned = rated.filter(id => displayScores[id] === displaySelfScores[id]).length;
             const overrated = rated.filter(id => (displaySelfScores[id]||0) > (displayScores[id]||0)).length;
@@ -2201,7 +2283,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                       <span style={{ fontSize: 11, color: V.s5 }}>· {myLevel.name}</span>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginTop: 20 }}>
-                      {CRITERIA.map(s => {
+                      {TCRIT.map(s => {
                         const pct = sectionPct(s, displayScores);
                         return (
                           <div key={s.section} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "10px 6px" }}>
@@ -2280,7 +2362,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                     <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>{t("biggest_gaps")}</div>
                     {(() => {
                       const bigGaps = rated
-                        .map(id => ({ id, diff: (displaySelfScores[id]||0) - (displayScores[id]||0), criterion: CRITERIA.flatMap(s=>s.items).find(c=>c.id===id) }))
+                        .map(id => ({ id, diff: (displaySelfScores[id]||0) - (displayScores[id]||0), criterion: TCRIT.flatMap(s=>s.items).find(c=>c.id===id) }))
                         .filter(g => Math.abs(g.diff) >= 1).sort((a,b) => Math.abs(b.diff)-Math.abs(a.diff)).slice(0,5);
                       if (!bigGaps.length) return <div style={{ color: V.s5, fontSize: 13 }}>{t("excellent_lucidity")}</div>;
                       return bigGaps.map(({ id, diff, criterion }) => {
@@ -2292,9 +2374,9 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                           <div key={id} style={{ background: `${gc}08`, border: `1px solid ${gc}20`, borderRadius: 12, padding: "10px 14px", marginBottom: 8 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                               <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: V.white }}>{criterion?.label}</span>
-                              <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{t("you")}: {sdrSc?.label}</span>
+                              <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{t("you")}: {sdrSc ? t(`score_${sdrSc.value}`) : ""}</span>
                               <span style={{ color: gc }}>→</span>
-                              <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{t("marc")}: {coachSc?.label}</span>
+                              <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{t("marc")}: {coachSc ? t(`score_${coachSc.value}`) : ""}</span>
                             </div>
                             <div style={{ fontSize: 11, color: gc, fontStyle: "italic" }}>
                               {isOver ? t("overest_detail") : t("underest_detail")}
@@ -2307,7 +2389,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 )}
 
                 {/* ══ 4. CRITÈRES + MARC TE PARLE ══ */}
-                {CRITERIA.map(section => (
+                {TCRIT.map(section => (
                   <div key={section.section} style={{ ...card(), marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -2333,8 +2415,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                             <div style={{ width: 6, height: 6, borderRadius: "50%", background: section.color, flexShrink: 0 }}/>
                             <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: V.white }}>{c.label}</span>
                             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                              {selfSc && selfSc.value > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>Toi: {selfSc.label}</span>}
-                              {sc && sc.value > 0 && <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 20, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>Marc: {sc.label}</span>}
+                              {selfSc && selfSc.value > 0 && <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>{t("you")}: {t(`score_${selfSc.value}`)}</span>}
+                              {sc && sc.value > 0 && <span style={{ fontSize: 11, padding: "3px 12px", borderRadius: 20, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>{t("marc")}: {t(`score_${sc.value}`)}</span>}
                             </div>
                           </div>
                           {just && (
@@ -2820,7 +2902,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 
                     {/* Mini barres sections */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginTop: 12 }}>
-                      {CRITERIA.map(section => {
+                      {TCRIT.map(section => {
                         const avg = sdr.reviews.length ? Math.round(sdr.reviews.reduce((a,r)=>a+sectionPct(section,r.scores||{}),0)/sdr.reviews.length) : 0;
                         return (
                           <div key={section.section}>
@@ -2861,7 +2943,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
               {/* Scores par section */}
               <div style={card()}>
                 <span style={sLabel}>Performance par section</span>
-                {CRITERIA.map(section => {
+                {TCRIT.map(section => {
                   const avg = activeSdr.reviews.length ? Math.round(activeSdr.reviews.reduce((a,r)=>a+sectionPct(section,r.scores||{}),0)/activeSdr.reviews.length) : 0;
                   return <SectionBar key={section.section} label={section.section} pct={avg} color={section.color} icon={section.icon}/>;
                 })}
@@ -2942,7 +3024,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           const m = getMedal(r.globalPct || 0);
           const canDelete = r.userId === user?.uid || isAdmin;
           const rLucScore = r.lucScore;
-          const rRated = r.selfScores ? CRITERIA.flatMap(s=>s.items.map(i=>i.id)).filter(id => (r.selfScores[id]??0)>0 && (r.scores?.[id]??0)>0) : [];
+          const rRated = r.selfScores ? TCRIT.flatMap(s=>s.items.map(i=>i.id)).filter(id => (r.selfScores[id]??0)>0 && (r.scores?.[id]??0)>0) : [];
           const rAligned = rRated.filter(id => r.scores[id] === r.selfScores[id]).length;
           const rOverrated = rRated.filter(id => (r.selfScores[id]||0) > (r.scores[id]||0)).length;
           const rUnderrated = rRated.filter(id => (r.selfScores[id]||0) < (r.scores[id]||0)).length;
@@ -2972,7 +3054,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 </div>
               )}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginTop: 16 }}>
-                {CRITERIA.map(s => (
+                {TCRIT.map(s => (
                   <div key={s.section} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "8px 4px" }}>
                     <div style={{ fontSize: 14, marginBottom: 3 }}>{s.icon}</div>
                     <div style={{ fontSize: 14, fontWeight: 800, color: s.color }}>{sectionPct(s, r.scores||{})}%</div>
@@ -3039,7 +3121,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 </div>
                 {/* Top gaps */}
                 {rRated.filter(id => Math.abs((r.selfScores[id]||0)-(r.scores[id]||0)) >= 2).slice(0,3).map(id => {
-                  const c = CRITERIA.flatMap(s=>s.items).find(ci=>ci.id===id);
+                  const c = TCRIT.flatMap(s=>s.items).find(ci=>ci.id===id);
                   const diff = (r.selfScores[id]||0) - (r.scores[id]||0);
                   const sdrSc = SCORES.find(s=>s.value===(r.selfScores[id]||0));
                   const coachSc = SCORES.find(s=>s.value===(r.scores[id]||0));
@@ -3048,9 +3130,9 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                     <div key={id} style={{ background:`${col}08`, border:`1px solid ${col}20`, borderRadius:10, padding:"10px 12px", marginBottom:8 }}>
                       <div style={{ fontSize:12, fontWeight:600, color:V.white, marginBottom:4 }}>{c?.label}</div>
                       <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:6 }}>
-                        <span style={{ fontSize:10, background:`${sdrSc?.color}20`, color:sdrSc?.color, padding:"2px 8px", borderRadius:10, fontWeight:700 }}>Toi: {sdrSc?.label}</span>
+                        <span style={{ fontSize:10, background:`${sdrSc?.color}20`, color:sdrSc?.color, padding:"2px 8px", borderRadius:10, fontWeight:700 }}>{t("you")}: {sdrSc ? t(`score_${sdrSc.value}`) : ""}</span>
                         <span style={{ color:col }}>→</span>
-                        <span style={{ fontSize:10, background:`${coachSc?.color}20`, color:coachSc?.color, padding:"2px 8px", borderRadius:10, fontWeight:700 }}>Marc: {coachSc?.label}</span>
+                        <span style={{ fontSize:10, background:`${coachSc?.color}20`, color:coachSc?.color, padding:"2px 8px", borderRadius:10, fontWeight:700 }}>{t("marc")}: {coachSc ? t(`score_${coachSc.value}`) : ""}</span>
                       </div>
                       <div style={{ fontSize:11, color:col, fontStyle:"italic" }}>
                         {diff > 0 ? "⚠️ Angle mort identifié" : "💪 Tu te sous-estimais"}
@@ -3062,7 +3144,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             )}
 
             {/* Critères avec Marc te parle */}
-            {CRITERIA.map(section => (
+            {TCRIT.map(section => (
               <div key={section.section} style={{ ...card(), marginBottom: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -3083,8 +3165,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         <div style={{ width: 5, height: 5, borderRadius: "50%", background: section.color, flexShrink: 0 }}/>
                         <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: V.white }}>{c.label}</span>
                         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                          {selfSc && selfSc.value > 0 && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>Toi: {selfSc.label}</span>}
-                          {sc && sc.value > 0 && <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 10, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>Marc: {sc.label}</span>}
+                          {selfSc && selfSc.value > 0 && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: `${selfSc.color}15`, color: selfSc.color, border: `1px solid ${selfSc.color}30` }}>{t("you")}: {t(`score_${selfSc.value}`)}</span>}
+                          {sc && sc.value > 0 && <span style={{ fontSize: 10, padding: "2px 9px", borderRadius: 10, background: `${sc.color}20`, color: sc.color, fontWeight: 700, border: `1px solid ${sc.color}40` }}>{t("marc")}: {t(`score_${sc.value}`)}</span>}
                         </div>
                       </div>
                       {just && (
