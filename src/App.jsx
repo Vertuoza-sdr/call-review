@@ -88,6 +88,212 @@ const sectionPct = (section, scores) => {
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const DAILY_GOAL = 3;
 
+// ── Traductions (FR / NL) ──────────────────────────────────────────────────────
+const TR = {
+  fr: {
+    // Nav
+    nav_dashboard: "Dashboard", nav_new: "Analyser un call", nav_history: "Mes calls",
+    nav_objectives: "Objectifs", nav_team: "L'Équipe", nav_admin: "Admin",
+    nav_analysis: "🎯 Analyse", nav_detail: "🔍 Détail",
+    logout: "Déconnexion", today: "aujourd'hui",
+    // Dashboard
+    welcome_title: "Ton premier call t'attend.",
+    welcome_sub: "Lance ton analyse, reçois ton coaching personnalisé et rejoins le classement de l'équipe.",
+    welcome_cta: "🚀 Analyser mon premier call",
+    score_avg: "Score moy.", sales_role: "Vertuoza Sales", call: "call", calls: "calls", analyzed: "analysé", analyzed_pl: "analysés",
+    xp_to: "XP avant",
+    week: "Cette semaine", best_score: "Meilleur score", luc_avg: "LUC moyen", obj_validated: "Obj. validés",
+    team_ranking: "Classement équipe", no_calls_yet: "Aucun call pour l'instant.",
+    recent_form: "Forme récente",
+    next_objectives: "Objectifs pour le prochain call",
+    see_all_objectives: "Voir tous les objectifs →",
+    my_badges: "Mes écussons",
+    unlock_badges: "Analyse des calls pour débloquer tes premiers écussons !",
+    // Daily counter
+    daily_done: "Objectif du jour atteint ! 🎉",
+    daily_remaining: (n) => `Encore ${n} call${n>1?"s":""} à analyser`,
+    daily_count: (c,g) => `${c} / ${g} calls analysés aujourd'hui`,
+    // New call
+    step_transcript: "Transcript", step_selfeval: "Autoévaluation",
+    call_info: "Infos du call", prospect_name: "Nom du prospect", call_date: "Date (ex: 08/06/2026)",
+    call_transcript: "Transcript du call", import_txt: "📁 Importer .txt",
+    transcript_placeholder: "Colle le transcript ici...\n\nSDR: Bonjour Marc, c'est Julie de Vertuoza...\nPROSPECT: Oui bonjour...",
+    words: "mots", est_duration: "min de call",
+    next_selfeval: "Suivant — Autoévaluation →",
+    selfeval_title: "🙋 Comment tu évalues ton call ?",
+    selfeval_sub: "Avant de voir l'analyse du coach, prends 2 minutes pour te noter honnêtement. C'est pour toi — plus tu es lucide, plus le feedback sera utile.",
+    feeling_title: "💬 Ton ressenti sur ce call",
+    feeling_good: "✅ Ce que tu penses avoir bien fait", feeling_good_ph: "Ex: J'ai bien qualifié la taille de l'entreprise, j'ai utilisé le bon vocabulaire bâtiment...",
+    feeling_bad: "⚠️ Ce que tu aurais dû faire différemment", feeling_bad_ph: "Ex: J'ai été trop rapide sur le pitch, je n'ai pas quantifié le problème en euros...",
+    feeling_general: "🎯 Ressenti général sur ce call",
+    feeling_fire: "En feu", feeling_solid: "Solide", feeling_avg: "Moyen", feeling_frustrating: "Frustrant", feeling_improve: "À améliorer",
+    back: "← Retour", launch_analysis: "🚀 Lancer l'analyse du coach",
+    autosave_note: "✅ Sauvegarde automatique · Résultats en ~30 secondes",
+    // Review
+    no_analysis: "Aucune analyse en cours",
+    no_analysis_sub: "Lance une nouvelle analyse pour voir les résultats ici.",
+    analyze_call: "✍️ Analyser un call",
+    showing_last: "Affichage du dernier call analysé —",
+    new_btn: "+ Nouveau",
+    call_with: "Call avec",
+    saved: "✅ Sauvegardé", from_history: "📋 Depuis l'historique", saving: "💾 En cours...",
+    coach_name: "Marc", coach_role: "Coach Sales · Vertuoza",
+    did_well: "✅ Ce que t'as bien fait", working_on: "🎯 Ce qu'on travaille",
+    mirror_title: "Miroir — Toi vs Marc", mirror_sub: "Ta lucidité sur ton propre call",
+    luc_score: "Score LUC",
+    aligned: "Aligné", overestimated: "Surestimé", underestimated: "Sous-estimé",
+    aligned_msg: "Tu te connais", overest_msg: "Angles morts", underest_msg: "Trop modeste",
+    biggest_gaps: "🃏 Plus grands écarts",
+    excellent_lucidity: "🎯 Excellente lucidité !",
+    you: "Toi", marc: "Marc",
+    overest_detail: "⚠️ Angle mort — tu te voyais mieux que Marc te voit",
+    underest_detail: "💪 Tu te sous-estimais — Marc pense mieux de toi",
+    criteria: "critères", marc_speaks: "Marc te parle",
+    what_marc_said: "🎙️ Ce que Marc aurait dit", phrases_to_use: "💬 Phrases à utiliser",
+    badges_unlocked: "🎖️ Écussons débloqués", keep_going: "Continue comme ça.",
+    // History
+    my_calls: "Mes calls", reviews_count: "reviews", avg: "de moyenne",
+    new_call: "+ Nouveau call", no_saved_review: "Aucune review sauvegardée",
+    delete: "🗑️ Supprimer",
+    // Objectives
+    my_objectives: "🎯 Mes Objectifs Coach",
+    objectives_sub: "Générés automatiquement après chaque analyse · Validés au call suivant",
+    clear_all: "🗑️ Tout effacer",
+    in_progress: "⏳ En cours — À valider au prochain call",
+    validated: "✅ Objectifs validés — Comment tu les as atteints",
+    failed: "❌ Objectifs ratés — À retenter",
+    pending: "En cours", validated_kpi: "Validés", failed_kpi: "Ratés", success_rate: "Taux succès",
+    priority_high: "🔴 Haute", priority_medium: "🟡 Moyenne", priority_low: "🟢 Basse",
+    phrase_to_use: "💬 Phrase à utiliser", what_to_say: "💬 Ce que tu devais dire",
+    validated_on: "✓ Validé le", call_validated: "📋 Call où tu l'as validé",
+    coach_analysis: "Analyse du coach :", retry: "Retente cet objectif au prochain call 💪", not_achieved: "Non atteint",
+    no_objectives: "Aucun objectif encore",
+    no_objectives_sub: "Analyse un call pour recevoir tes premiers objectifs personnalisés du coach IA.",
+    // Team
+    team_cards: "🏆 Cartes collector de l'équipe", no_members: "Aucun membre pour l'instant.",
+    my_card: "Ma carte", team_tab: "L'équipe",
+    add_photo: "Ajouter ta photo", change_photo: "Changer la photo",
+    photo_url: "URL de ta photo", apply: "✅ Appliquer", cancel: "Annuler",
+    // Admin
+    admin_view: "⚙️ Vue Admin — Équipe", admin_mode: "Mode Administrateur",
+    active_sales: "Sales actifs", total_calls: "Total calls", team_score: "Score équipe", obj_in_progress: "Obj. en cours",
+    this_week: "cette sem.",
+    section_performance: "Performance par section",
+    objectives_in_progress: "⏳ Objectifs en cours",
+    history_calls: "📋 Historique des calls", see: "Voir →",
+    badges_unlocked_count: "🛡️ Écussons débloqués",
+    // Auth
+    login: "Connexion", signup: "Créer un compte",
+    login_title: "Accès à ton espace", login_sub: "Entre dans l'arène. Tes stats t'attendent.",
+    signup_title: "Rejoindre l'équipe", signup_sub: "Crée ton compte et commence à progresser.",
+    continue_google: "Continuer avec Google", or_email: "ou avec ton email",
+    email_label: "Email", password_label: "Mot de passe",
+    enter_arena: "Entrer dans l'arène →", join_team: "Rejoindre l'équipe →", connecting: "⏳ Connexion…",
+    restricted_access: "🔒 Accès réservé à l'équipe Sales Vertuoza",
+    every_session: "Chaque session est une opportunité de progresser.",
+    headline1: "Analyse.", headline2: "Progresse.", headline3: "Domine.",
+    hero_desc: "L'environnement d'entraînement des meilleurs Sales Vertuoza. Chaque call analysé, chaque objectif validé, chaque rang atteint.",
+    stat_criteria: "Critères analysés", stat_ai: "IAs en parallèle", stat_progress: "Progression/semaine",
+  },
+  nl: {
+    nav_dashboard: "Dashboard", nav_new: "Gesprek analyseren", nav_history: "Mijn gesprekken",
+    nav_objectives: "Doelen", nav_team: "Het team", nav_admin: "Beheer",
+    nav_analysis: "🎯 Analyse", nav_detail: "🔍 Detail",
+    logout: "Uitloggen", today: "vandaag",
+    welcome_title: "Je eerste gesprek wacht op je.",
+    welcome_sub: "Start je analyse, ontvang je persoonlijke coaching en kom in het teamklassement.",
+    welcome_cta: "🚀 Analyseer mijn eerste gesprek",
+    score_avg: "Gem. score", sales_role: "Vertuoza Sales", call: "gesprek", calls: "gesprekken", analyzed: "geanalyseerd", analyzed_pl: "geanalyseerd",
+    xp_to: "XP tot",
+    week: "Deze week", best_score: "Beste score", luc_avg: "Gem. LUC", obj_validated: "Behaalde doelen",
+    team_ranking: "Teamklassement", no_calls_yet: "Nog geen gesprekken.",
+    recent_form: "Recente vorm",
+    next_objectives: "Doelen voor het volgende gesprek",
+    see_all_objectives: "Alle doelen bekijken →",
+    my_badges: "Mijn badges",
+    unlock_badges: "Analyseer gesprekken om je eerste badges te ontgrendelen!",
+    daily_done: "Dagdoel bereikt! 🎉",
+    daily_remaining: (n) => `Nog ${n} gesprek${n>1?"ken":""} te analyseren`,
+    daily_count: (c,g) => `${c} / ${g} gesprekken vandaag geanalyseerd`,
+    step_transcript: "Transcript", step_selfeval: "Zelfevaluatie",
+    call_info: "Gesprekinfo", prospect_name: "Naam prospect", call_date: "Datum (bv. 08/06/2026)",
+    call_transcript: "Transcript van het gesprek", import_txt: "📁 .txt importeren",
+    transcript_placeholder: "Plak hier het transcript...\n\nSALES: Hallo Marc, dit is Julie van Vertuoza...\nPROSPECT: Ja hallo...",
+    words: "woorden", est_duration: "min gesprek",
+    next_selfeval: "Volgende — Zelfevaluatie →",
+    selfeval_title: "🙋 Hoe evalueer je je gesprek?",
+    selfeval_sub: "Voor je de analyse van de coach ziet, neem 2 minuten om jezelf eerlijk te beoordelen. Dit is voor jou — hoe eerlijker, hoe nuttiger de feedback.",
+    feeling_title: "💬 Jouw gevoel over dit gesprek",
+    feeling_good: "✅ Wat je denkt goed gedaan te hebben", feeling_good_ph: "Bv: Ik heb de bedrijfsgrootte goed gekwalificeerd, ik gebruikte de juiste bouwvakjargon...",
+    feeling_bad: "⚠️ Wat je anders had moeten doen", feeling_bad_ph: "Bv: Ik was te snel met de pitch, ik heb het probleem niet in euro's gekwantificeerd...",
+    feeling_general: "🎯 Algemeen gevoel over dit gesprek",
+    feeling_fire: "Top vorm", feeling_solid: "Solide", feeling_avg: "Gemiddeld", feeling_frustrating: "Frustrerend", feeling_improve: "Te verbeteren",
+    back: "← Terug", launch_analysis: "🚀 Start coachanalyse",
+    autosave_note: "✅ Automatisch opgeslagen · Resultaten binnen ~30 sec",
+    no_analysis: "Geen actieve analyse",
+    no_analysis_sub: "Start een nieuwe analyse om hier resultaten te zien.",
+    analyze_call: "✍️ Gesprek analyseren",
+    showing_last: "Laatst geanalyseerd gesprek —",
+    new_btn: "+ Nieuw",
+    call_with: "Gesprek met",
+    saved: "✅ Opgeslagen", from_history: "📋 Uit geschiedenis", saving: "💾 Bezig...",
+    coach_name: "Marc", coach_role: "Sales Coach · Vertuoza",
+    did_well: "✅ Wat je goed deed", working_on: "🎯 Waar we aan werken",
+    mirror_title: "Spiegel — Jij vs Marc", mirror_sub: "Jouw zelfinzicht over dit gesprek",
+    luc_score: "LUC-score",
+    aligned: "Juist", overestimated: "Overschat", underestimated: "Onderschat",
+    aligned_msg: "Je kent jezelf", overest_msg: "Blinde vlekken", underest_msg: "Te bescheiden",
+    biggest_gaps: "🃏 Grootste verschillen",
+    excellent_lucidity: "🎯 Uitstekend zelfinzicht!",
+    you: "Jij", marc: "Marc",
+    overest_detail: "⚠️ Blinde vlek — je zag jezelf beter dan Marc je ziet",
+    underest_detail: "💪 Je onderschatte jezelf — Marc denkt beter over je",
+    criteria: "criteria", marc_speaks: "Marc praat tegen je",
+    what_marc_said: "🎙️ Wat Marc gezegd zou hebben", phrases_to_use: "💬 Te gebruiken zinnen",
+    badges_unlocked: "🎖️ Badges ontgrendeld", keep_going: "Ga zo door.",
+    my_calls: "Mijn gesprekken", reviews_count: "reviews", avg: "gemiddeld",
+    new_call: "+ Nieuw gesprek", no_saved_review: "Geen opgeslagen review",
+    delete: "🗑️ Verwijderen",
+    my_objectives: "🎯 Mijn Coachdoelen",
+    objectives_sub: "Automatisch gegenereerd na elke analyse · Gevalideerd bij het volgende gesprek",
+    clear_all: "🗑️ Alles wissen",
+    in_progress: "⏳ Lopend — Te valideren bij volgend gesprek",
+    validated: "✅ Behaalde doelen — Hoe je ze bereikte",
+    failed: "❌ Niet behaalde doelen — Opnieuw proberen",
+    pending: "Lopend", validated_kpi: "Behaald", failed_kpi: "Gemist", success_rate: "Slagingsgraad",
+    priority_high: "🔴 Hoog", priority_medium: "🟡 Gemiddeld", priority_low: "🟢 Laag",
+    phrase_to_use: "💬 Te gebruiken zin", what_to_say: "💬 Wat je moest zeggen",
+    validated_on: "✓ Behaald op", call_validated: "📋 Gesprek waar je het behaalde",
+    coach_analysis: "Coachanalyse:", retry: "Probeer dit doel opnieuw bij het volgende gesprek 💪", not_achieved: "Niet behaald",
+    no_objectives: "Nog geen doelen",
+    no_objectives_sub: "Analyseer een gesprek om je eerste persoonlijke doelen van de AI-coach te ontvangen.",
+    team_cards: "🏆 Collectiekaarten van het team", no_members: "Nog geen teamleden.",
+    my_card: "Mijn kaart", team_tab: "Het team",
+    add_photo: "Foto toevoegen", change_photo: "Foto wijzigen",
+    photo_url: "URL van je foto", apply: "✅ Toepassen", cancel: "Annuleren",
+    admin_view: "⚙️ Beheerweergave — Team", admin_mode: "Beheerdersmodus",
+    active_sales: "Actieve sales", total_calls: "Totaal gesprekken", team_score: "Teamscore", obj_in_progress: "Lopende doelen",
+    this_week: "deze week",
+    section_performance: "Prestaties per sectie",
+    objectives_in_progress: "⏳ Lopende doelen",
+    history_calls: "📋 Gespreksgeschiedenis", see: "Bekijk →",
+    badges_unlocked_count: "🛡️ Ontgrendelde badges",
+    login: "Inloggen", signup: "Account aanmaken",
+    login_title: "Toegang tot je ruimte", login_sub: "Stap de arena binnen. Je stats wachten op je.",
+    signup_title: "Word lid van het team", signup_sub: "Maak je account aan en begin met groeien.",
+    continue_google: "Doorgaan met Google", or_email: "of met je e-mail",
+    email_label: "E-mail", password_label: "Wachtwoord",
+    enter_arena: "Stap de arena binnen →", join_team: "Word lid van het team →", connecting: "⏳ Verbinden…",
+    restricted_access: "🔒 Toegang voorbehouden aan het Vertuoza Sales-team",
+    every_session: "Elke sessie is een kans om te groeien.",
+    headline1: "Analyseer.", headline2: "Groei.", headline3: "Domineer.",
+    hero_desc: "De trainingsomgeving van de beste Vertuoza Sales. Elk geanalyseerd gesprek, elk behaald doel, elk niveau bereikt.",
+    stat_criteria: "Geanalyseerde criteria", stat_ai: "AI's parallel", stat_progress: "Groei/week",
+  },
+};
+
+
+
 // ── Système de Séniorité & XP ─────────────────────────────────────────────────
 const LEVELS = [
   { name: "Junior",  min: 0,    max: 499,  color: "#10B981", glow: "#10B98150", icon: "🟢", next: "Médior" },
@@ -193,7 +399,7 @@ function Sparkline({ values, color, width = 160, height = 48 }) {
 }
 
 // ── Daily counter ─────────────────────────────────────────────────────────────
-function DailyCounter({ count }) {
+function DailyCounter({ count, t }) {
   const pct = Math.min(count / DAILY_GOAL, 1);
   const done = count >= DAILY_GOAL;
   return (
@@ -211,9 +417,9 @@ function DailyCounter({ count }) {
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 3 }}>
-          {done ? "Objectif du jour atteint ! 🎉" : `Encore ${DAILY_GOAL - count} call${DAILY_GOAL - count > 1 ? "s" : ""} à analyser`}
+          {done ? t("daily_done") : t("daily_remaining", DAILY_GOAL - count)}
         </div>
-        <div style={{ fontSize: 11, color: V.s5 }}>{count} / {DAILY_GOAL} calls analysés aujourd'hui</div>
+        <div style={{ fontSize: 11, color: V.s5 }}>{t("daily_count", count, DAILY_GOAL)}</div>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
           {Array.from({ length: DAILY_GOAL }).map((_, i) => (
             <div key={i} style={{ flex: 1, height: 4, borderRadius: 4, background: i < count ? (done ? "#10B981" : V.orange) : "rgba(255,255,255,0.1)", transition: "background .3s" }}/>
@@ -343,7 +549,7 @@ async function callAPI(system, content, maxT = 4000) {
 }
 
 // ── SDR Collector Card ────────────────────────────────────────────────────────
-function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
+function FifaCard({ name, avg, medal, reviews, allReviews, userId, t }) {
   const [photoUrl, setPhotoUrl] = useState(() => localStorage.getItem("vertuoza_photo") || "");
   const [editing, setEditing] = useState(false);
   const [inputVal, setInputVal] = useState(photoUrl);
@@ -468,7 +674,7 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: 3 }}>
-          {[["mine","Ma carte"],["team","L'équipe"]].map(([id,lbl]) => (
+          {[["mine",t("my_card")],["team",t("team_tab")]].map(([id,lbl]) => (
             <button key={id} onClick={() => setActiveTab(id)} style={{ padding: "6px 16px", background: activeTab===id ? V.blue : "transparent", border: "none", borderRadius: 8, color: activeTab===id ? V.white : V.s5, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{lbl}</button>
           ))}
         </div>
@@ -527,7 +733,7 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
                       </text>
                       <text x={30} y={60} textAnchor="middle" fill={T.glow} fontSize={9} opacity={0.8}>SDR</text>
                     </svg>
-                    <div style={{ fontSize: 10, color: T.accent, opacity: 0.7 }}>📷 Ajouter ta photo</div>
+                    <div style={{ fontSize: 10, color: T.accent, opacity: 0.7 }}>📷 {t("add_photo")}</div>
                   </div>
                 )}
               </div>
@@ -611,18 +817,18 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
           {/* Bouton photo */}
           {editing ? (
             <div style={{ width: 240, background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 12, padding: 12 }}>
-              <div style={{ fontSize: 10, color: V.s5, marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>URL de ta photo</div>
+              <div style={{ fontSize: 10, color: V.s5, marginBottom: 6, textTransform: "uppercase", letterSpacing: "1px" }}>{t("photo_url")}</div>
               <input type="text" placeholder="https://... (LinkedIn, Slack...)" value={inputVal}
                 onChange={e => setInputVal(e.target.value)} onKeyDown={e => e.key === "Enter" && savePhoto()} autoFocus
                 style={{ width: "100%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: V.white, fontSize: 12, padding: "8px 10px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }}/>
               <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={savePhoto} style={{ flex: 1, background: V.blue, border: "none", borderRadius: 8, color: V.white, fontSize: 12, fontWeight: 700, padding: "7px", cursor: "pointer", fontFamily: "inherit" }}>✅ Appliquer</button>
-                <button onClick={() => setEditing(false)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: V.s5, fontSize: 12, padding: "7px 12px", cursor: "pointer", fontFamily: "inherit" }}>Annuler</button>
+                <button onClick={savePhoto} style={{ flex: 1, background: V.blue, border: "none", borderRadius: 8, color: V.white, fontSize: 12, fontWeight: 700, padding: "7px", cursor: "pointer", fontFamily: "inherit" }}>{t("apply")}</button>
+                <button onClick={() => setEditing(false)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: V.s5, fontSize: 12, padding: "7px 12px", cursor: "pointer", fontFamily: "inherit" }}>{t("cancel")}</button>
               </div>
             </div>
           ) : (
             <button onClick={() => { setInputVal(photoUrl); setEditing(true); }} style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 11, padding: "6px 18px", cursor: "pointer", fontFamily: "inherit" }}>
-              📷 {photoUrl ? "Changer la photo" : "Ajouter ta photo"}
+              📷 {photoUrl ? t("change_photo") : t("add_photo")}
             </button>
           )}
         </>)}
@@ -630,12 +836,12 @@ function FifaCard({ name, avg, medal, reviews, allReviews, userId }) {
         {/* ── TEAM CARDS ── */}
         {activeTab === "team" && (
           <div>
-            <div style={{ fontSize: 11, color: V.s5, textAlign: "center", marginBottom: 14 }}>🏆 Cartes collector de l'équipe</div>
+            <div style={{ fontSize: 11, color: V.s5, textAlign: "center", marginBottom: 14 }}>{t("team_cards")}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center", maxWidth: 420 }}>
               {teamCards.map((player, i) => (
                 <MiniCard key={player.name} player={player} rank={i}/>
               ))}
-              {teamCards.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Aucun membre pour l'instant.</div>}
+              {teamCards.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>{t("no_members")}</div>}
             </div>
           </div>
         )}
@@ -1063,6 +1269,13 @@ function XPWidget({ xp, reviews, objectives }) {
 
 // ── App principale ────────────────────────────────────────────────────────────
 export default function App() {
+  const [lang, setLang] = useState(() => localStorage.getItem("vertuoza_lang") || "fr");
+  const t = (key, ...args) => {
+    const val = TR[lang]?.[key] ?? TR.fr[key] ?? key;
+    return typeof val === "function" ? val(...args) : val;
+  };
+  const changeLang = (l) => { setLang(l); localStorage.setItem("vertuoza_lang", l); };
+
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authMode, setAuthMode] = useState("login");
@@ -1234,8 +1447,13 @@ export default function App() {
     setLoading(true); setPage("review"); setReviewTab("mirror");
     setScores({}); setJustifications({}); setExpertScripts({}); setLevelUp({}); setGlobalComment("");
 
+    const feelingMap = { fire: "En feu / motivé", solid: "Solide / satisfait", avg: "Moyen / mitigé", frustrating: "Frustrant", improve: "À améliorer / pas confiant" };
     const selfEvalContext = selfDone && Object.keys(selfScores).length > 0
-      ? `\n\nAUTOÉVALUATION DU SDR (ses propres notes) :\n${JSON.stringify(selfScores)}\n\nCe qu'il pense avoir bien fait : "${selfComment.strengths}"\nCe qu'il pense avoir raté : "${selfComment.weaknesses}"\nRessentis général : "${selfComment.feeling}"`
+      ? `\n\nAUTOÉVALUATION DU SDR (ses propres notes) :\n${JSON.stringify(selfScores)}\n\nCe qu'il pense avoir bien fait : "${selfComment.strengths}"\nCe qu'il pense avoir raté : "${selfComment.weaknesses}"\nRessentis général : "${feelingMap[selfComment.feeling] || selfComment.feeling}"`
+      : "";
+
+    const langInstruction = lang === "nl"
+      ? "\n\nIMPORTANT : Réponds entièrement en NÉERLANDAIS (Dutch/Vlaams). Tous les textes (justifications, commentaires, scripts, objectifs) doivent être en néerlandais, naturel et professionnel, adapté au secteur de la construction belge (bouwsector). Les clés JSON restent en anglais/français comme spécifié, seules les VALEURS texte sont en néerlandais."
       : "";
 
     const p1 = `Tu es Marc, coach commercial senior chez Vertuoza avec 12 ans d'expérience dans la vente terrain BTP. Tu as toi-même été SDR, manager, puis directeur commercial. Tu analyses des calls de tes SDRs comme un mentor qui connaît chaque artisan du secteur par cœur.
@@ -1259,25 +1477,25 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
   "globalImprovements": ["Ce qu'on travaille en priorité", "Axe 2", "Axe 3"],
   "selfAnalysisComment": "Si une autoévaluation SDR est fournie : compare les notes SDR vs tes notes. Dis-lui où il se voit trop bien (angles morts), où il se sous-estime (manque de confiance), et où il est lucide. Parle-lui directement — 'Tu t'es donné 4 sur le closing alors que...' / 'Par contre tu avais raison de noter 2 sur...' Si pas d'autoéval, retourne null."
 }
-Scores : 1=absent, 2=insuffisant, 3=correct, 4=maîtrisé. Exigeant mais juste.`;
+Scores : 1=absent, 2=insuffisant, 3=correct, 4=maîtrisé. Exigeant mais juste.${langInstruction}`;
 
     const p2 = `Tu es Marc, le même coach. Pour chaque critère, écris exactement ce que tu aurais dit à la place du SDR dans CE call précis. Pas un script générique — une vraie phrase ancrée dans le contexte du prospect, son métier, ses douleurs identifiées dans le transcript.
 
 Retourne UNIQUEMENT du JSON valide sans markdown :
 {"tone":"...","rapport":"...","rhythm":"...","opening":"...","flow":"...","talkratio":"...","structure":"...","tools":"...","decision":"...","timing":"...","quantify":"...","objections":"...","sector":"...","trade":"...","vocab":"...","cases":"...","benefits":"...","control":"...","commitment":"...","energy":"..."}
 
-1-3 phrases max. Naturel, humain, professionnel. Utilise le prénom du prospect si identifiable. Vocabulaire BTP concret.`;
+1-3 phrases max. Naturel, humain, professionnel. Utilise le prénom du prospect si identifiable. Vocabulaire BTP concret.${langInstruction}`;
 
     const p3 = `Tu es Marc, le coach. Pour chaque critère, donne une explication courte de ce qu'il faut changer + 2-3 phrases types à réutiliser. Les phrases doivent sonner comme de vraies phrases de call — pas des templates robotiques.
 
 Retourne UNIQUEMENT du JSON valide sans markdown :
-{"tone":{"tip":"Ce qu'il faut concrètement changer — 1 phrase directe.","scripts":["Phrase naturelle 1","Phrase naturelle 2"]},"rapport":{"tip":"...","scripts":["...","..."]},"rhythm":{"tip":"...","scripts":["...","..."]},"opening":{"tip":"...","scripts":["...","...","..."]},"flow":{"tip":"...","scripts":["...","..."]},"talkratio":{"tip":"...","scripts":["...","..."]},"structure":{"tip":"...","scripts":["...","...","..."]},"tools":{"tip":"...","scripts":["...","...","..."]},"decision":{"tip":"...","scripts":["...","..."]},"timing":{"tip":"...","scripts":["...","...","..."]},"quantify":{"tip":"...","scripts":["...","...","..."]},"objections":{"tip":"...","scripts":["...","...","..."]},"sector":{"tip":"...","scripts":["...","..."]},"trade":{"tip":"...","scripts":["...","..."]},"vocab":{"tip":"...","scripts":["...","..."]},"cases":{"tip":"...","scripts":["...","...","..."]},"benefits":{"tip":"...","scripts":["...","...","..."]},"control":{"tip":"...","scripts":["...","..."]},"commitment":{"tip":"...","scripts":["...","...","..."]},"energy":{"tip":"...","scripts":["...","..."]}}`;
+{"tone":{"tip":"Ce qu'il faut concrètement changer — 1 phrase directe.","scripts":["Phrase naturelle 1","Phrase naturelle 2"]},"rapport":{"tip":"...","scripts":["...","..."]},"rhythm":{"tip":"...","scripts":["...","..."]},"opening":{"tip":"...","scripts":["...","...","..."]},"flow":{"tip":"...","scripts":["...","..."]},"talkratio":{"tip":"...","scripts":["...","..."]},"structure":{"tip":"...","scripts":["...","...","..."]},"tools":{"tip":"...","scripts":["...","...","..."]},"decision":{"tip":"...","scripts":["...","..."]},"timing":{"tip":"...","scripts":["...","...","..."]},"quantify":{"tip":"...","scripts":["...","...","..."]},"objections":{"tip":"...","scripts":["...","...","..."]},"sector":{"tip":"...","scripts":["...","..."]},"trade":{"tip":"...","scripts":["...","..."]},"vocab":{"tip":"...","scripts":["...","..."]},"cases":{"tip":"...","scripts":["...","...","..."]},"benefits":{"tip":"...","scripts":["...","...","..."]},"control":{"tip":"...","scripts":["...","..."]},"commitment":{"tip":"...","scripts":["...","...","..."]},"energy":{"tip":"...","scripts":["...","..."]}}${langInstruction}`;
 
     const p4 = `Tu es Marc, le coach. Génère 3 objectifs très précis pour le prochain call — basés sur les 3 plus gros points faibles. Chaque objectif doit être mesurable et formulé comme une mission concrète, pas un conseil vague.
 
 Retourne UNIQUEMENT du JSON valide sans markdown :
 [{"title":"Mission courte (max 6 mots)","description":"Ce que le SDR doit faire différemment — formulé comme une instruction précise de coach. 1-2 phrases max.","criterionId":"ID parmi: tone,rapport,rhythm,opening,flow,talkratio,structure,tools,decision,timing,quantify,objections,sector,trade,vocab,cases,benefits,control,commitment,energy","criterionLabel":"Nom lisible","priority":"high|medium|low","example":"Phrase exacte à prononcer dans le prochain call"}]
-3 objectifs max. Ultra-concrets. Pas de généralités.`;
+3 objectifs max. Ultra-concrets. Pas de généralités.${langInstruction}`;
 
     try {
       const [r1, r2, r3, r4] = await Promise.all([
@@ -1360,6 +1578,13 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
         @keyframes borderGlow { 0%,100% { border-color: ${V.neon}40; box-shadow: 0 0 20px ${V.neon}10; } 50% { border-color: ${V.neon}80; box-shadow: 0 0 40px ${V.neon}30; } }
       `}</style>
 
+      {/* Language switcher */}
+      <div style={{ position: "absolute", top: 20, right: 20, zIndex: 10, display: "flex", gap: 2, background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 20, padding: 3 }}>
+        {["fr","nl"].map(l => (
+          <button key={l} onClick={() => changeLang(l)} style={{ background: lang === l ? V.blue : "transparent", border: "none", borderRadius: 16, color: lang === l ? V.white : V.s5, fontWeight: 700, fontSize: 11, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{l.toUpperCase()}</button>
+        ))}
+      </div>
+
       {/* ── FOND GAUCHE — Univers immersif ── */}
       <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 64px", overflow: "hidden" }}>
 
@@ -1402,21 +1627,21 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 
           {/* Headline principale */}
           <div style={{ fontSize: 48, fontWeight: 900, color: V.white, lineHeight: 1.1, letterSpacing: "-2px", marginBottom: 20 }}>
-            Analyse.<br/>
-            <span style={{ color: V.neon }}>Progresse.</span><br/>
-            <span style={{ color: V.orange }}>Domine.</span>
+            {t("headline1")}<br/>
+            <span style={{ color: V.neon }}>{t("headline2")}</span><br/>
+            <span style={{ color: V.orange }}>{t("headline3")}</span>
           </div>
 
           <div style={{ fontSize: 16, color: V.s5, lineHeight: 1.7, maxWidth: 400, marginBottom: 48 }}>
-            L'environnement d'entraînement des meilleurs SDR Vertuoza. Chaque call analysé, chaque objectif validé, chaque rang atteint.
+            {t("hero_desc")}
           </div>
 
           {/* Stats live */}
           <div style={{ display: "flex", gap: 32, marginBottom: 48 }}>
             {[
-              { value: "20", label: "Critères analysés", color: V.neon },
-              { value: "4", label: "IAs en parallèle", color: V.orange },
-              { value: "3×", label: "Progression/semaine", color: "#10B981" },
+              { value: "20", label: t("stat_criteria"), color: V.neon },
+              { value: "4", label: t("stat_ai"), color: V.orange },
+              { value: "3×", label: t("stat_progress"), color: "#10B981" },
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontSize: 32, fontWeight: 900, color: s.color, lineHeight: 1, letterSpacing: "-1px" }}>{s.value}</div>
@@ -1456,16 +1681,16 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           {/* Header form */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: V.white, marginBottom: 6 }}>
-              {authMode === "login" ? "Accès à ton espace" : "Rejoindre l'équipe"}
+              {authMode === "login" ? t("login_title") : t("signup_title")}
             </div>
             <div style={{ fontSize: 13, color: V.s5 }}>
-              {authMode === "login" ? "Entre dans l'arène. Tes stats t'attendent." : "Crée ton compte et commence à progresser."}
+              {authMode === "login" ? t("login_sub") : t("signup_sub")}
             </div>
           </div>
 
           {/* Tabs */}
           <div style={{ display: "flex", gap: 4, marginBottom: 28, background: "rgba(255,255,255,0.05)", borderRadius: 10, padding: 4 }}>
-            {[["login","Connexion"],["signup","Créer un compte"]].map(([m,l]) => (
+            {[["login",t("login")],["signup",t("signup")]].map(([m,l]) => (
               <button key={m} onClick={() => setAuthMode(m)} style={{ flex: 1, padding: "9px", background: authMode === m ? V.blue : "transparent", border: "none", borderRadius: 8, color: authMode === m ? V.white : V.s5, fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{l}</button>
             ))}
           </div>
@@ -1482,13 +1707,13 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
               <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
               <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
             </svg>
-            Continuer avec Google
+            {t("continue_google")}
           </button>
 
           {/* Séparateur */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }}/>
-            <span style={{ fontSize: 11, color: V.s4 }}>ou avec ton email</span>
+            <span style={{ fontSize: 11, color: V.s4 }}>{t("or_email")}</span>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }}/>
           </div>
 
@@ -1508,14 +1733,14 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             onMouseEnter={e => { if (!authBusy) { e.currentTarget.style.background = V.s3; e.currentTarget.style.transform = "translateY(-1px)"; }}}
             onMouseLeave={e => { e.currentTarget.style.background = V.blue; e.currentTarget.style.transform = "none"; }}
           >
-            {authBusy ? "⏳ Connexion…" : authMode === "login" ? "Entrer dans l'arène →" : "Rejoindre l'équipe →"}
+            {authBusy ? t("connecting") : authMode === "login" ? t("enter_arena") : t("join_team")}
           </button>
 
           {/* Footer */}
           <div style={{ marginTop: 28, padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: `1px solid rgba(255,255,255,0.06)` }}>
             <div style={{ fontSize: 11, color: V.s4, textAlign: "center", lineHeight: 1.6 }}>
-              🔒 Accès réservé à l'équipe SDR Vertuoza<br/>
-              <span style={{ color: V.s5 }}>Chaque session est une opportunité de progresser.</span>
+              {t("restricted_access")}<br/>
+              <span style={{ color: V.s5 }}>{t("every_session")}</span>
             </div>
           </div>
         </div>
@@ -1539,28 +1764,34 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* Language switcher */}
+          <div style={{ display: "flex", gap: 2, background: "rgba(255,255,255,0.05)", border: `1px solid ${V.border}`, borderRadius: 20, padding: 3 }}>
+            {["fr","nl"].map(l => (
+              <button key={l} onClick={() => changeLang(l)} style={{ background: lang === l ? V.blue : "transparent", border: "none", borderRadius: 16, color: lang === l ? V.white : V.s5, fontWeight: 700, fontSize: 11, padding: "4px 10px", cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>{l.toUpperCase()}</button>
+            ))}
+          </div>
           {/* Daily counter compact */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", border: `1px solid ${todayReviews >= DAILY_GOAL ? "#10B98140" : V.border}`, borderRadius: 20, padding: "6px 14px" }}>
             <span style={{ fontSize: 12 }}>{todayReviews >= DAILY_GOAL ? "✅" : "🎯"}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: todayReviews >= DAILY_GOAL ? "#10B981" : V.s5 }}>{todayReviews}/{DAILY_GOAL} aujourd'hui</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: todayReviews >= DAILY_GOAL ? "#10B981" : V.s5 }}>{todayReviews}/{DAILY_GOAL} {t("today")}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isAdmin && <span style={{ fontSize: 10, color: V.neon, background: `${V.neon}15`, border: `1px solid ${V.neon}40`, borderRadius: 20, padding: "2px 8px", fontWeight: 700, letterSpacing: "0.5px" }}>ADMIN</span>}
             <span style={{ fontSize: 16 }}>{myMedal.icon}</span>
             <span style={{ fontSize: 12, color: V.s5 }}>{user.email.split("@")[0]}</span>
           </div>
-          <button onClick={() => signOut(auth)} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 12 }}>Déconnexion</button>
+          <button onClick={() => signOut(auth)} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 12 }}>{t("logout")}</button>
         </div>
       </div>
 
       {/* Nav */}
       <div style={{ borderBottom: `1px solid ${V.border}`, display: "flex", padding: "0 24px", background: V.s1 }}>
-        {[["dashboard","📊","Dashboard"],["new","✍️","Analyser un call"],["history","📋","Mes calls"],["objectives","🎯", pendingObjectives.length > 0 ? `Objectifs (${pendingObjectives.length})` : "Objectifs"],["team","🃏","L'Équipe"],...(isAdmin ? [["admin","⚙️","Admin"]] : [])].map(([id,icon,lbl]) => (
+        {[["dashboard","📊",t("nav_dashboard")],["new","✍️",t("nav_new")],["history","📋",t("nav_history")],["objectives","🎯", pendingObjectives.length > 0 ? `${t("nav_objectives")} (${pendingObjectives.length})` : t("nav_objectives")],["team","🃏",t("nav_team")],...(isAdmin ? [["admin","⚙️",t("nav_admin")]] : [])].map(([id,icon,lbl]) => (
           <button key={id} onClick={() => setPage(id)} style={{ background: "none", border: "none", borderBottom: page === id ? `2px solid ${V.neon}` : "2px solid transparent", color: page === id ? V.neon : V.s5, fontSize: 13, fontWeight: 600, padding: "12px 18px", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6, transition: "all .2s" }}>{icon} {lbl}</button>
         ))}
         {(page === "review" || page === "detail") && (
           <button style={{ background: "none", border: "none", borderBottom: `2px solid ${V.orange}`, color: V.orange, fontSize: 13, fontWeight: 600, padding: "12px 18px", fontFamily: "inherit" }}>
-            {page === "review" ? "🎯 Analyse" : "🔍 Détail"}
+            {page === "review" ? t("nav_analysis") : t("nav_detail")}
           </button>
         )}
       </div>
@@ -1574,9 +1805,9 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             /* Empty state — call to action */
             <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 64, marginBottom: 20, filter: `drop-shadow(0 0 20px ${V.orange}60)` }}>🎙️</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: V.white, letterSpacing: "-1px", marginBottom: 8 }}>Ton premier call t'attend.</div>
-              <div style={{ fontSize: 15, color: V.s5, maxWidth: 360, lineHeight: 1.7, marginBottom: 32 }}>Lance ton analyse, reçois ton coaching personnalisé et rejoins le classement de l'équipe.</div>
-              <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 14, color: V.white, fontWeight: 800, fontSize: 16, padding: "16px 40px", cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.3px", boxShadow: `0 8px 32px ${V.orange}50` }}>🚀 Analyser mon premier call</button>
+              <div style={{ fontSize: 28, fontWeight: 900, color: V.white, letterSpacing: "-1px", marginBottom: 8 }}>{t("welcome_title")}</div>
+              <div style={{ fontSize: 15, color: V.s5, maxWidth: 360, lineHeight: 1.7, marginBottom: 32 }}>{t("welcome_sub")}</div>
+              <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 14, color: V.white, fontWeight: 800, fontSize: 16, padding: "16px 40px", cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.3px", boxShadow: `0 8px 32px ${V.orange}50` }}>{t("welcome_cta")}</button>
             </div>
           ) : (<>
 
@@ -1599,7 +1830,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
               {/* Jersey number */}
               <div style={{ textAlign: "center", flexShrink: 0 }}>
                 <div style={{ fontSize: 72, fontWeight: 900, color: myMedal.color, letterSpacing: "-4px", lineHeight: 1, textShadow: `0 0 40px ${myMedal.color}60` }}>{myAvg || "—"}</div>
-                <div style={{ fontSize: 10, color: myMedal.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: "3px", marginTop: 2 }}>Score moy.</div>
+                <div style={{ fontSize: 10, color: myMedal.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: "3px", marginTop: 2 }}>{t("score_avg")}</div>
               </div>
 
               {/* Infos joueur */}
@@ -1609,7 +1840,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                   <div style={{ background: `${myLevel.color}20`, border: `1px solid ${myLevel.color}50`, borderRadius: 20, padding: "3px 12px", fontSize: 11, fontWeight: 800, color: myLevel.color }}>{myLevel.icon} {myLevel.name}</div>
                   {isAdmin && <div style={{ background: `${V.neon}15`, border: `1px solid ${V.neon}40`, borderRadius: 20, padding: "3px 12px", fontSize: 10, fontWeight: 800, color: V.neon, letterSpacing: "1px" }}>ADMIN</div>}
                 </div>
-                <div style={{ fontSize: 12, color: V.s5, marginBottom: 10 }}>Vertuoza Sales · {reviews.length} call{reviews.length > 1 ? "s" : ""} analysé{reviews.length > 1 ? "s" : ""}</div>
+                <div style={{ fontSize: 12, color: V.s5, marginBottom: 10 }}>{t("sales_role")} · {reviews.length} {reviews.length > 1 ? t("calls") : t("call")} {reviews.length > 1 ? t("analyzed_pl") : t("analyzed")}</div>
                 <Stars count={myMedal.stars} color={myMedal.color}/>
                 <div style={{ fontSize: 11, color: myMedal.color, marginTop: 4, fontWeight: 600 }}>{myMedal.icon} {myMedal.label}</div>
               </div>
@@ -1625,7 +1856,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 </div>
                 {LEVELS.find(l => l.min > myXP) && (
                   <div style={{ fontSize: 10, color: V.s4 }}>
-                    {LEVELS.find(l => l.min > myXP).min - myXP} XP avant {LEVELS.find(l => l.min > myXP).name}
+                    {LEVELS.find(l => l.min > myXP).min - myXP} {t("xp_to")} {LEVELS.find(l => l.min > myXP).name}
                   </div>
                 )}
               </div>
@@ -1634,16 +1865,16 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 
           {/* ── COMPTEUR JOURNALIER ── */}
           <div style={{ marginBottom: 16 }}>
-            <DailyCounter count={todayReviews}/>
+            <DailyCounter count={todayReviews} t={t}/>
           </div>
 
           {/* ── KPIs MINI ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
             {[
-              { label: "Cette semaine", value: reviews.filter(r => { if (!r.createdAt) return false; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); return (new Date()-d) < 7*86400000; }).length, icon: "📅", color: V.blue, suffix: " calls" },
-              { label: "Meilleur score", value: Math.max(...reviews.map(r => r.globalPct||0)), icon: "⭐", color: "#FFD700", suffix: "%" },
-              { label: "LUC moyen", value: (() => { const l = reviews.filter(r=>r.lucScore!=null); return l.length ? Math.round(l.reduce((a,r)=>a+(r.lucScore||0),0)/l.length) : "—"; })(), icon: "🧠", color: "#8B5CF6", suffix: l => typeof l === "number" ? "" : "" },
-              { label: "Obj. validés", value: objectives.filter(o=>o.status==="validated").length, icon: "✅", color: "#10B981", suffix: "" },
+              { label: t("week"), value: reviews.filter(r => { if (!r.createdAt) return false; const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt); return (new Date()-d) < 7*86400000; }).length, icon: "📅", color: V.blue, suffix: " calls" },
+              { label: t("best_score"), value: Math.max(...reviews.map(r => r.globalPct||0)), icon: "⭐", color: "#FFD700", suffix: "%" },
+              { label: t("luc_avg"), value: (() => { const l = reviews.filter(r=>r.lucScore!=null); return l.length ? Math.round(l.reduce((a,r)=>a+(r.lucScore||0),0)/l.length) : "—"; })(), icon: "🧠", color: "#8B5CF6", suffix: l => typeof l === "number" ? "" : "" },
+              { label: t("obj_validated"), value: objectives.filter(o=>o.status==="validated").length, icon: "✅", color: "#10B981", suffix: "" },
             ].map(k => (
               <div key={k.label} style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 14, padding: "16px 12px", textAlign: "center" }}>
                 <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
@@ -1656,15 +1887,15 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           {/* ── CARTE + LEADERBOARD ── */}
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, marginBottom: 20, alignItems: "start" }}>
             {/* Carte FIFA */}
-            <FifaCard name={user.email.split("@")[0]} avg={myAvg} medal={myMedal} reviews={reviews} allReviews={allReviews} userId={user.uid}/>
+            <FifaCard name={user.email.split("@")[0]} avg={myAvg} medal={myMedal} reviews={reviews} allReviews={allReviews} userId={user.uid} t={t}/>
 
             {/* Leaderboard style match */}
             <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, height: "100%", boxSizing: "border-box" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <span style={{ fontSize: 16 }}>🏆</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Classement équipe</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>{t("team_ranking")}</span>
               </div>
-              {leaderboard.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>Aucun call pour l'instant.</div>}
+              {leaderboard.length === 0 && <div style={{ color: V.s5, fontSize: 13 }}>{t("no_calls_yet")}</div>}
               {leaderboard.map((s, i) => {
                 const m = getMedal(s.avg);
                 const isMe = s.name === user.email.split("@")[0];
@@ -1696,7 +1927,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 16 }}>📈</span>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Forme récente</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>{t("recent_form")}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <Sparkline values={last10.map(r=>r.globalPct||0)} color={V.neon} width={100} height={28}/>
@@ -1729,7 +1960,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <span style={{ fontSize: 16 }}>🎯</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Objectifs pour le prochain call</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>{t("next_objectives")}</span>
                 <span style={{ marginLeft: "auto", background: `${V.orange}20`, border: `1px solid ${V.orange}40`, borderRadius: 20, padding: "2px 10px", fontSize: 11, color: V.orange, fontWeight: 700 }}>{pendingObjectives.length}</span>
               </div>
               {pendingObjectives.slice(0,3).map((obj, i) => {
@@ -1744,7 +1975,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                   </div>
                 );
               })}
-              <button onClick={() => setPage("objectives")} style={{ width: "100%", marginTop: 12, background: "rgba(255,255,255,0.04)", border: `1px solid ${V.border}`, borderRadius: 10, color: V.s5, fontSize: 12, fontWeight: 600, padding: "9px", cursor: "pointer", fontFamily: "inherit" }}>Voir tous les objectifs →</button>
+              <button onClick={() => setPage("objectives")} style={{ width: "100%", marginTop: 12, background: "rgba(255,255,255,0.04)", border: `1px solid ${V.border}`, borderRadius: 10, color: V.s5, fontSize: 12, fontWeight: 600, padding: "9px", cursor: "pointer", fontFamily: "inherit" }}>{t("see_all_objectives")}</button>
             </div>
           )}
 
@@ -1756,7 +1987,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
               <div style={{ background: V.card, border: `1px solid ${V.border}`, borderRadius: 16, padding: 20, marginBottom: 20 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                   <span style={{ fontSize: 16 }}>🛡️</span>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>Mes écussons</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: V.white, textTransform: "uppercase", letterSpacing: "1px" }}>{t("my_badges")}</span>
                   <span style={{ marginLeft: "auto", fontSize: 11, color: V.s5 }}>{earned.length}/{BADGES.length}</span>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -1787,7 +2018,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 
           {/* Étapes visuelles */}
           <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 24 }}>
-            {[["1","Transcript","transcript"],["2","Autoévaluation","selfeval"]].map(([num,lbl,step],i) => (
+            {[["1",t("step_transcript"),"transcript"],["2",t("step_selfeval"),"selfeval"]].map(([num,lbl,step],i) => (
               <div key={step} style={{ display: "flex", alignItems: "center", flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: newStep === step ? V.orange : newStep === "selfeval" && step === "transcript" ? "#10B981" : "rgba(255,255,255,0.1)", border: `2px solid ${newStep === step ? V.orange : newStep === "selfeval" && step === "transcript" ? "#10B981" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: V.white, transition: "all .3s" }}>
@@ -1803,30 +2034,30 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           {/* ── ÉTAPE 1 : Transcript ── */}
           {newStep === "transcript" && (<>
             <div style={card()}>
-              <span style={sLabel}>Infos du call</span>
+              <span style={sLabel}>{t("call_info")}</span>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <input placeholder="Nom du prospect" value={meta.prospect} onChange={e => setMeta({...meta, prospect: e.target.value})} style={inputStyle}/>
-                <input placeholder="Date (ex: 08/06/2026)" value={meta.date} onChange={e => setMeta({...meta, date: e.target.value})} style={inputStyle}/>
+                <input placeholder={t("prospect_name")} value={meta.prospect} onChange={e => setMeta({...meta, prospect: e.target.value})} style={inputStyle}/>
+                <input placeholder={t("call_date")} value={meta.date} onChange={e => setMeta({...meta, date: e.target.value})} style={inputStyle}/>
               </div>
             </div>
             <div style={card()}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <span style={sLabel}>Transcript du call</span>
-                <button onClick={() => txtRef.current.click()} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 12, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>📁 Importer .txt</button>
+                <span style={sLabel}>{t("call_transcript")}</span>
+                <button onClick={() => txtRef.current.click()} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 8, color: V.s5, fontSize: 12, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>{t("import_txt")}</button>
                 <input ref={txtRef} type="file" accept=".txt,.md" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setTranscript(ev.target.result); r.readAsText(f); }}/>
               </div>
               <textarea value={transcript} onChange={e => setTranscript(e.target.value)}
-                placeholder={"Colle le transcript ici...\n\nSDR: Bonjour Marc, c'est Julie de Vertuoza...\nPROSPECT: Oui bonjour..."}
+                placeholder={t("transcript_placeholder")}
                 style={{ ...inputStyle, minHeight: 300, fontFamily: "monospace", resize: "vertical", lineHeight: 1.7 }}/>
-              {transcript && <div style={{ marginTop: 8, fontSize: 11, color: V.s5 }}>📝 {transcript.split(" ").length} mots · ~{Math.ceil(transcript.split(" ").length / 130)} min de call</div>}
+              {transcript && <div style={{ marginTop: 8, fontSize: 11, color: V.s5 }}>📝 {transcript.split(" ").length} {t("words")} · ~{Math.ceil(transcript.split(" ").length / 130)} {t("est_duration")}</div>}
             </div>
             <div style={{ ...card(), padding: "14px 18px", marginBottom: 14 }}>
-              <DailyCounter count={todayReviews}/>
+              <DailyCounter count={todayReviews} t={t}/>
             </div>
             <button onClick={() => { if (!transcript.trim()) return; setSelfScores({}); setSelfComment({ strengths: "", weaknesses: "", feeling: "" }); setNewStep("selfeval"); }}
               disabled={!transcript.trim()}
               style={{ width: "100%", background: !transcript.trim() ? "rgba(255,255,255,0.08)" : V.blue, border: "none", borderRadius: 14, color: !transcript.trim() ? V.s4 : V.white, fontSize: 15, fontWeight: 700, padding: "16px", cursor: !transcript.trim() ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .3s" }}>
-              Suivant — Autoévaluation →
+              {t("next_selfeval")}
             </button>
           </>)}
 
@@ -1834,8 +2065,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           {newStep === "selfeval" && (<>
             <div style={card()}>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: V.white, marginBottom: 6 }}>🙋 Comment tu évalues ton call ?</div>
-                <div style={{ fontSize: 13, color: V.s5, lineHeight: 1.6 }}>Avant de voir l'analyse du coach, prends 2 minutes pour te noter honnêtement. C'est pour toi — plus tu es lucide, plus le feedback sera utile.</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: V.white, marginBottom: 6 }}>{t("selfeval_title")}</div>
+                <div style={{ fontSize: 13, color: V.s5, lineHeight: 1.6 }}>{t("selfeval_sub")}</div>
               </div>
 
               {/* Notes par section */}
@@ -1866,26 +2097,26 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
 
             {/* Ressenti global */}
             <div style={card()}>
-              <span style={sLabel}>💬 Ton ressenti sur ce call</span>
+              <span style={sLabel}>{t("feeling_title")}</span>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>✅ Ce que tu penses avoir bien fait</div>
+                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>{t("feeling_good")}</div>
                   <textarea value={selfComment.strengths} onChange={e => setSelfComment(p => ({...p, strengths: e.target.value}))}
-                    placeholder="Ex: J'ai bien qualifié la taille de l'entreprise, j'ai utilisé le bon vocabulaire bâtiment..."
+                    placeholder={t("feeling_good_ph")}
                     style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.6 }}/>
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>⚠️ Ce que tu aurais dû faire différemment</div>
+                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>{t("feeling_bad")}</div>
                   <textarea value={selfComment.weaknesses} onChange={e => setSelfComment(p => ({...p, weaknesses: e.target.value}))}
-                    placeholder="Ex: J'ai été trop rapide sur le pitch, je n'ai pas quantifié le problème en euros..."
+                    placeholder={t("feeling_bad_ph")}
                     style={{ ...inputStyle, minHeight: 70, resize: "vertical", lineHeight: 1.6 }}/>
                 </div>
                 <div>
-                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>🎯 Ressenti général sur ce call</div>
+                  <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>{t("feeling_general")}</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {[["🔥","En feu"],["😊","Solide"],["😐","Moyen"],["😤","Frustrant"],["💪","À améliorer"]].map(([emoji,label]) => (
-                      <button key={label} onClick={() => setSelfComment(p => ({...p, feeling: label}))}
-                        style={{ background: selfComment.feeling === label ? `${V.orange}20` : "rgba(255,255,255,0.05)", border: `1.5px solid ${selfComment.feeling === label ? V.orange : "rgba(255,255,255,0.1)"}`, borderRadius: 20, padding: "6px 14px", fontSize: 12, color: selfComment.feeling === label ? V.orange : V.s5, cursor: "pointer", fontFamily: "inherit", fontWeight: selfComment.feeling === label ? 700 : 400, transition: "all .2s" }}>
+                    {[["🔥","fire",t("feeling_fire")],["😊","solid",t("feeling_solid")],["😐","avg",t("feeling_avg")],["😤","frustrating",t("feeling_frustrating")],["💪","improve",t("feeling_improve")]].map(([emoji,key,label]) => (
+                      <button key={label} onClick={() => setSelfComment(p => ({...p, feeling: key}))}
+                        style={{ background: selfComment.feeling === key ? `${V.orange}20` : "rgba(255,255,255,0.05)", border: `1.5px solid ${selfComment.feeling === key ? V.orange : "rgba(255,255,255,0.1)"}`, borderRadius: 20, padding: "6px 14px", fontSize: 12, color: selfComment.feeling === key ? V.orange : V.s5, cursor: "pointer", fontFamily: "inherit", fontWeight: selfComment.feeling === key ? 700 : 400, transition: "all .2s" }}>
                         {emoji} {label}
                       </button>
                     ))}
@@ -1895,13 +2126,13 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             </div>
 
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setNewStep("transcript")} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 12, color: V.s5, fontSize: 14, fontWeight: 600, padding: "14px 20px", cursor: "pointer", fontFamily: "inherit" }}>← Retour</button>
+              <button onClick={() => setNewStep("transcript")} style={{ background: "rgba(255,255,255,0.07)", border: `1px solid ${V.border}`, borderRadius: 12, color: V.s5, fontSize: 14, fontWeight: 600, padding: "14px 20px", cursor: "pointer", fontFamily: "inherit" }}>{t("back")}</button>
               <button onClick={() => { setSelfDone(true); handleAnalyze(); }}
                 style={{ flex: 1, background: V.orange, border: "none", borderRadius: 12, color: V.white, fontSize: 15, fontWeight: 700, padding: "14px", cursor: "pointer", fontFamily: "inherit" }}>
-                🚀 Lancer l'analyse du coach
+                {t("launch_analysis")}
               </button>
             </div>
-            <div style={{ textAlign: "center", marginTop: 8, fontSize: 11, color: V.s4 }}>✅ Sauvegarde automatique · Résultats en ~30 secondes</div>
+            <div style={{ textAlign: "center", marginTop: 8, fontSize: 11, color: V.s4 }}>{t("autosave_note")}</div>
           </>)}
         </>)}
 
@@ -1949,7 +2180,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 {fallback && (
                   <div style={{ background: `${V.blue}10`, border: `1px solid ${V.blue}30`, borderRadius: 10, padding: "10px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ fontSize: 13 }}>📋</span>
-                    <span style={{ fontSize: 12, color: V.s5 }}>Affichage du dernier call analysé — <strong style={{ color: V.white }}>{fallback.prospectName || "Prospect"}</strong> · {fallback.callDate || ""}</span>
+                    <span style={{ fontSize: 12, color: V.s5 }}>{t("showing_last")} <strong style={{ color: V.white }}>{fallback.prospectName || "Prospect"}</strong> · {fallback.callDate || ""}</span>
                     <button onClick={() => setPage("new")} style={{ marginLeft: "auto", background: V.orange, border: "none", borderRadius: 8, color: V.white, fontSize: 11, fontWeight: 700, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>+ Nouveau</button>
                   </div>
                 )}
@@ -1963,7 +2194,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                     <div style={{ fontSize: 48, marginBottom: 8, filter: `drop-shadow(0 0 16px ${m.color})` }}>{m.icon}</div>
                     <div style={{ fontSize: 52, fontWeight: 900, color: m.color, letterSpacing: "-2px", lineHeight: 1, textShadow: `0 0 30px ${m.color}60` }}>{displayPct}%</div>
                     <div style={{ fontSize: 16, color: V.white, fontWeight: 700, marginTop: 6 }}>{m.label}</div>
-                    {displayMeta.prospect && <div style={{ fontSize: 13, color: V.s5, marginTop: 4 }}>Call avec <strong style={{ color: V.white }}>{displayMeta.prospect}</strong>{displayMeta.date ? ` · ${displayMeta.date}` : ""}</div>}
+                    {displayMeta.prospect && <div style={{ fontSize: 13, color: V.s5, marginTop: 4 }}>{t("call_with")} <strong style={{ color: V.white }}>{displayMeta.prospect}</strong>{displayMeta.date ? ` · ${displayMeta.date}` : ""}</div>}
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 18px" }}>
                       <span style={{ fontSize: 14 }}>⚡</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: myLevel.color }}>+{xpGained} XP</span>
@@ -1982,7 +2213,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                       })}
                     </div>
                     <div style={{ marginTop: 14, fontSize: 11, color: saveStatus === "saved" ? "#10B981" : V.s4 }}>
-                      {saveStatus === "saved" ? "✅ Sauvegardé" : fallback ? "📋 Depuis l'historique" : "💾 En cours..."}
+                      {saveStatus === "saved" ? t("saved") : fallback ? t("from_history") : t("saving")}
                     </div>
                   </div>
                 </div>
@@ -1993,8 +2224,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                       <div style={{ width: 38, height: 38, borderRadius: "50%", background: `${V.neon}20`, border: `2px solid ${V.neon}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🧑‍💼</div>
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>Marc</div>
-                        <div style={{ fontSize: 10, color: V.neon, letterSpacing: "1px" }}>Coach Sales · Vertuoza</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>{t("coach_name")}</div>
+                        <div style={{ fontSize: 10, color: V.neon, letterSpacing: "1px" }}>{t("coach_role")}</div>
                       </div>
                     </div>
                     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
@@ -2003,11 +2234,11 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                     {(displayStrengths.length > 0 || displayImprovements.length > 0) && (
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                         <div>
-                          <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>✅ Ce que t'as bien fait</div>
+                          <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>{t("did_well")}</div>
                           {displayStrengths.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 6, borderLeft: "2px solid #10B981", lineHeight: 1.5 }}>{s}</div>)}
                         </div>
                         <div>
-                          <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>🎯 Ce qu'on travaille</div>
+                          <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>{t("working_on")}</div>
                           {displayImprovements.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "6px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 6, borderLeft: `2px solid ${V.orange}`, lineHeight: 1.5 }}>{s}</div>)}
                         </div>
                       </div>
@@ -2022,22 +2253,22 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 20 }}>🪞</span>
                         <div>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>Miroir — Toi vs Marc</div>
-                          <div style={{ fontSize: 11, color: V.s5 }}>Ta lucidité sur ton propre call</div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: V.white }}>{t("mirror_title")}</div>
+                          <div style={{ fontSize: 11, color: V.s5 }}>{t("mirror_sub")}</div>
                         </div>
                       </div>
                       {displayLucScore !== null && displayLucScore !== undefined && (
                         <div style={{ textAlign: "center", background: "#8B5CF620", border: "1px solid #8B5CF650", borderRadius: 12, padding: "8px 16px" }}>
                           <div style={{ fontSize: 22, fontWeight: 900, color: "#8B5CF6" }}>{displayLucScore}</div>
-                          <div style={{ fontSize: 9, color: V.s5, textTransform: "uppercase", letterSpacing: "1px" }}>Score LUC</div>
+                          <div style={{ fontSize: 9, color: V.s5, textTransform: "uppercase", letterSpacing: "1px" }}>{t("luc_score")}</div>
                         </div>
                       )}
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
                       {[
-                        { label: "Aligné", value: aligned, color: "#10B981", icon: "🎯", msg: "Tu te connais" },
-                        { label: "Surestimé", value: overrated, color: "#EF4444", icon: "⚠️", msg: "Angles morts" },
-                        { label: "Sous-estimé", value: underrated, color: "#F59E0B", icon: "💪", msg: "Trop modeste" },
+                        { label: t("aligned"), value: aligned, color: "#10B981", icon: "🎯", msg: t("aligned_msg") },
+                        { label: t("overestimated"), value: overrated, color: "#EF4444", icon: "⚠️", msg: t("overest_msg") },
+                        { label: t("underestimated"), value: underrated, color: "#F59E0B", icon: "💪", msg: t("underest_msg") },
                       ].map(k => (
                         <div key={k.label} style={{ textAlign: "center", background: `${k.color}08`, border: `1px solid ${k.color}25`, borderRadius: 10, padding: "10px 6px" }}>
                           <div style={{ fontSize: 20 }}>{k.icon}</div>
@@ -2046,12 +2277,12 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         </div>
                       ))}
                     </div>
-                    <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>🃏 Plus grands écarts</div>
+                    <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 10 }}>{t("biggest_gaps")}</div>
                     {(() => {
                       const bigGaps = rated
                         .map(id => ({ id, diff: (displaySelfScores[id]||0) - (displayScores[id]||0), criterion: CRITERIA.flatMap(s=>s.items).find(c=>c.id===id) }))
                         .filter(g => Math.abs(g.diff) >= 1).sort((a,b) => Math.abs(b.diff)-Math.abs(a.diff)).slice(0,5);
-                      if (!bigGaps.length) return <div style={{ color: V.s5, fontSize: 13 }}>🎯 Excellente lucidité !</div>;
+                      if (!bigGaps.length) return <div style={{ color: V.s5, fontSize: 13 }}>{t("excellent_lucidity")}</div>;
                       return bigGaps.map(({ id, diff, criterion }) => {
                         const sdrSc = SCORES.find(s => s.value === (displaySelfScores[id]||0));
                         const coachSc = SCORES.find(s => s.value === (displayScores[id]||0));
@@ -2061,12 +2292,12 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                           <div key={id} style={{ background: `${gc}08`, border: `1px solid ${gc}20`, borderRadius: 12, padding: "10px 14px", marginBottom: 8 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                               <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: V.white }}>{criterion?.label}</span>
-                              <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Toi: {sdrSc?.label}</span>
+                              <span style={{ fontSize: 10, background: `${sdrSc?.color}20`, color: sdrSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{t("you")}: {sdrSc?.label}</span>
                               <span style={{ color: gc }}>→</span>
-                              <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>Marc: {coachSc?.label}</span>
+                              <span style={{ fontSize: 10, background: `${coachSc?.color}20`, color: coachSc?.color, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{t("marc")}: {coachSc?.label}</span>
                             </div>
                             <div style={{ fontSize: 11, color: gc, fontStyle: "italic" }}>
-                              {isOver ? "⚠️ Angle mort — tu te voyais mieux que Marc te voit" : "💪 Tu te sous-estimais — Marc pense mieux de toi"}
+                              {isOver ? t("overest_detail") : t("underest_detail")}
                             </div>
                           </div>
                         );
@@ -2083,7 +2314,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         <span style={{ fontSize: 22 }}>{section.icon}</span>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 800, color: section.color, textTransform: "uppercase", letterSpacing: "1px" }}>{section.section}</div>
-                          <div style={{ fontSize: 11, color: V.s5 }}>{section.items.length} critères</div>
+                          <div style={{ fontSize: 11, color: V.s5 }}>{section.items.length} {t("criteria")}</div>
                         </div>
                       </div>
                       <div style={{ background: `${section.color}15`, border: `1px solid ${section.color}40`, borderRadius: 20, padding: "5px 16px" }}>
@@ -2111,7 +2342,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                                 <div style={{ width: 28, height: 28, borderRadius: "50%", background: `${V.neon}15`, border: `1.5px solid ${V.neon}30`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0, marginTop: 2 }}>🧑‍💼</div>
                                 <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0 12px 12px 12px", padding: "10px 14px", flex: 1 }}>
-                                  <div style={{ fontSize: 9, color: V.neon, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "1px" }}>Marc te parle</div>
+                                  <div style={{ fontSize: 9, color: V.neon, fontWeight: 700, marginBottom: 5, textTransform: "uppercase", letterSpacing: "1px" }}>{t("marc_speaks")}</div>
                                   <div style={{ fontSize: 13, color: V.bg1, lineHeight: 1.8 }}>{just}</div>
                                 </div>
                               </div>
@@ -2120,14 +2351,14 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                           {expert && (
                             <div style={{ marginLeft: 16, marginBottom: 8 }}>
                               <div style={{ background: `${V.blue}12`, border: `1px solid ${V.neon}20`, borderRadius: 10, padding: "10px 14px" }}>
-                                <div style={{ fontSize: 9, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>🎙️ Ce que Marc aurait dit</div>
+                                <div style={{ fontSize: 9, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>{t("what_marc_said")}</div>
                                 <div style={{ fontSize: 12.5, color: V.bg1, lineHeight: 1.7, fontStyle: "italic" }}>"{expert}"</div>
                               </div>
                             </div>
                           )}
                           {up?.scripts?.length > 0 && (
                             <div style={{ marginLeft: 16 }}>
-                              <div style={{ fontSize: 9, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>💬 Phrases à utiliser</div>
+                              <div style={{ fontSize: 9, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>{t("phrases_to_use")}</div>
                               {up.scripts.map((s,i) => (
                                 <div key={i} style={{ background: `${V.orange}08`, border: `1px solid ${V.orange}20`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: V.s5, fontStyle: "italic", lineHeight: 1.6, marginBottom: 5 }}>
                                   <span style={{ color: V.orange, fontWeight: 800, fontStyle: "normal" }}>{i+1}. </span>"{s}"
@@ -2147,8 +2378,8 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                   if (!newBadges.length) return null;
                   return (
                     <div style={{ ...card(), border: `1px solid ${V.neon}20`, textAlign: "center", padding: 24, marginBottom: 16 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: V.white, marginBottom: 4 }}>🎖️ Écussons débloqués</div>
-                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 16 }}>Continue comme ça.</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: V.white, marginBottom: 4 }}>{t("badges_unlocked")}</div>
+                      <div style={{ fontSize: 12, color: V.s5, marginBottom: 16 }}>{t("keep_going")}</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
                         {newBadges.slice(0,4).map(b => (
                           <div key={b.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 14px", background: `${V.neon}08`, border: `1.5px solid ${V.neon}30`, borderRadius: 12 }}>
@@ -2169,13 +2400,13 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
         {page === "history" && (<>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800 }}>Mes calls</div>
-              <div style={{ fontSize: 12, color: V.s5, marginTop: 2 }}>{reviews.length} reviews · {myAvg}% de moyenne</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>{t("my_calls")}</div>
+              <div style={{ fontSize: 12, color: V.s5, marginTop: 2 }}>{reviews.length} {t("reviews_count")} · {myAvg}% {t("avg")}</div>
             </div>
-            <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 10, color: V.white, fontWeight: 700, fontSize: 13, padding: "10px 20px", cursor: "pointer", fontFamily: "inherit" }}>+ Nouveau call</button>
+            <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 10, color: V.white, fontWeight: 700, fontSize: 13, padding: "10px 20px", cursor: "pointer", fontFamily: "inherit" }}>{t("new_call")}</button>
           </div>
 
-          {reviews.length === 0 && <div style={{ ...card(), textAlign: "center", padding: 48 }}><div style={{ fontSize: 32, marginBottom: 10 }}>📋</div><div style={{ color: V.s5 }}>Aucune review sauvegardée</div></div>}
+          {reviews.length === 0 && <div style={{ ...card(), textAlign: "center", padding: 48 }}><div style={{ fontSize: 32, marginBottom: 10 }}>📋</div><div style={{ color: V.s5 }}>{t("no_saved_review")}</div></div>}
 
           {reviews.map(r => {
             const m = getMedal(r.globalPct || 0);
@@ -2337,7 +2568,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
           const total     = objectives.length;
           const validRate = total ? Math.round((validated.length / total) * 100) : 0;
           const priorityColor = { high: V.orange, medium: V.blue, low: V.s5 };
-          const priorityLabel = { high: "🔴 Haute", medium: "🟡 Moyenne", low: "🟢 Basse" };
+          const priorityLabel = { high: t("priority_high"), medium: t("priority_medium"), low: t("priority_low") };
 
           const getReviewForObj = (obj) => {
             if (!obj.evaluatedAt) return null;
@@ -2352,21 +2583,21 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             {/* Header stats */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>🎯 Mes Objectifs Coach</div>
+                <div style={{ fontSize: 18, fontWeight: 800 }}>{t("my_objectives")}</div>
                 {objectives.length > 0 && (
-                  <button onClick={() => clearAllObjectives()} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>🗑️ Tout effacer</button>
+                  <button onClick={() => clearAllObjectives()} style={{ background: "#EF444415", border: "1px solid #EF444430", borderRadius: 8, color: "#EF4444", fontSize: 11, padding: "5px 12px", cursor: "pointer", fontFamily: "inherit" }}>{t("clear_all")}</button>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: V.s5 }}>Générés automatiquement après chaque analyse · Validés au call suivant</div>
+              <div style={{ fontSize: 12, color: V.s5 }}>{t("objectives_sub")}</div>
             </div>
 
             {/* KPIs */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
               {[
-                { label: "En cours",    value: pending.length,   icon: "⏳", color: V.orange },
-                { label: "Validés",     value: validated.length, icon: "✅", color: "#10B981" },
-                { label: "Ratés",       value: failed.length,    icon: "❌", color: "#EF4444" },
-                { label: "Taux succès", value: validRate + "%",  icon: "📈", color: V.neon },
+                { label: t("pending"),    value: pending.length,   icon: "⏳", color: V.orange },
+                { label: t("validated_kpi"),     value: validated.length, icon: "✅", color: "#10B981" },
+                { label: t("failed_kpi"),       value: failed.length,    icon: "❌", color: "#EF4444" },
+                { label: t("success_rate"), value: validRate + "%",  icon: "📈", color: V.neon },
               ].map(k => (
                 <div key={k.label} style={{ ...card(), marginBottom: 0, textAlign: "center", padding: "16px 10px" }}>
                   <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
@@ -2379,7 +2610,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             {/* Objectifs en cours */}
             {pending.length > 0 && (
               <div style={card()}>
-                <span style={sLabel}>⏳ En cours — À valider au prochain call</span>
+                <span style={sLabel}>{t("in_progress")}</span>
                 {pending.map((obj, i) => (
                   <div key={obj.id} onClick={() => setSelObj(selObj?.id === obj.id ? null : obj)}
                     style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${priorityColor[obj.priority] || V.border}30`, borderLeft: `3px solid ${priorityColor[obj.priority] || V.border}`, borderRadius: 10, padding: "14px", marginBottom: 10, cursor: "pointer", transition: "background .2s" }}>
@@ -2394,7 +2625,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                         <div style={{ fontSize: 13, color: V.s5, lineHeight: 1.6, marginBottom: selObj?.id === obj.id ? 10 : 0 }}>{obj.description}</div>
                         {selObj?.id === obj.id && obj.example && (
                           <div style={{ background: `${V.neon}10`, border: `1px solid ${V.neon}25`, borderRadius: 8, padding: "10px 12px", fontSize: 12, color: V.neon, fontStyle: "italic", marginTop: 8 }}>
-                            <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, fontStyle: "normal" }}>💬 Phrase à utiliser</div>
+                            <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, fontStyle: "normal" }}>{t("phrase_to_use")}</div>
                             "{obj.example}"
                           </div>
                         )}
@@ -2409,7 +2640,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             {/* Objectifs validés */}
             {validated.length > 0 && (
               <div style={card()}>
-                <span style={sLabel}>✅ Objectifs validés — Comment tu les as atteints</span>
+                <span style={sLabel}>{t("validated")}</span>
                 {validated.map((obj) => {
                   const review = getReviewForObj(obj);
                   const score = obj.evaluatedScore || 0;
@@ -2426,19 +2657,19 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                             {scoreObj && <span style={{ fontSize: 11, color: scoreObj.color, background: `${scoreObj.color}15`, padding: "2px 10px", borderRadius: 20, fontWeight: 600 }}>{scoreObj.label}</span>}
                           </div>
                           <div style={{ fontSize: 12, color: V.s5, marginBottom: 4 }}>{obj.description}</div>
-                          {obj.evaluatedAt && <div style={{ fontSize: 10, color: "#10B98180" }}>✓ Validé le {new Date(obj.evaluatedAt.toDate ? obj.evaluatedAt.toDate() : obj.evaluatedAt).toLocaleDateString("fr-FR")}</div>}
+                          {obj.evaluatedAt && <div style={{ fontSize: 10, color: "#10B98180" }}>{t("validated_on")} {new Date(obj.evaluatedAt.toDate ? obj.evaluatedAt.toDate() : obj.evaluatedAt).toLocaleDateString(lang==="nl"?"nl-BE":"fr-FR")}</div>}
 
                           {/* Détail si sélectionné */}
                           {selObj?.id === obj.id && (<>
                             {obj.example && (
                               <div style={{ background: `${V.neon}10`, border: `1px solid ${V.neon}25`, borderRadius: 8, padding: "10px 12px", fontSize: 12, color: V.neon, fontStyle: "italic", marginTop: 10 }}>
-                                <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, fontStyle: "normal" }}>💬 Ce que tu devais dire</div>
+                                <div style={{ fontSize: 10, color: V.neon, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, fontStyle: "normal" }}>{t("what_to_say")}</div>
                                 "{obj.example}"
                               </div>
                             )}
                             {review && (
                               <div style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${V.border}`, borderRadius: 8, padding: "12px", marginTop: 10 }}>
-                                <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>📋 Call où tu l'as validé</div>
+                                <div style={{ fontSize: 10, color: V.s5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>{t("call_validated")}</div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                   <div style={{ fontSize: 13, color: V.white, fontWeight: 600 }}>{review.prospectName || "Prospect"}</div>
                                   <div style={{ fontSize: 11, color: V.s5 }}>·</div>
@@ -2447,7 +2678,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                                 </div>
                                 {review.justifications?.[obj.criterionId] && (
                                   <div style={{ fontSize: 12, color: V.s5, marginTop: 8, padding: "8px 10px", background: "#10B98110", borderRadius: 6, borderLeft: "2px solid #10B981", lineHeight: 1.6 }}>
-                                    <span style={{ color: "#10B981", fontWeight: 600 }}>Analyse du coach : </span>
+                                    <span style={{ color: "#10B981", fontWeight: 600 }}>{t("coach_analysis")} </span>
                                     {review.justifications[obj.criterionId]}
                                   </div>
                                 )}
@@ -2466,7 +2697,7 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             {/* Objectifs ratés */}
             {failed.length > 0 && (
               <div style={card()}>
-                <span style={sLabel}>❌ Objectifs ratés — À retenter</span>
+                <span style={sLabel}>{t("failed")}</span>
                 {failed.map((obj) => (
                   <div key={obj.id} style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderLeft: "3px solid #EF4444", borderRadius: 10, padding: "14px", marginBottom: 10 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -2474,13 +2705,13 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: V.white }}>{obj.title}</span>
-                          <span style={{ fontSize: 11, color: "#EF4444", background: "#EF444415", padding: "2px 10px", borderRadius: 20, fontWeight: 600 }}>Non atteint</span>
+                          <span style={{ fontSize: 11, color: "#EF4444", background: "#EF444415", padding: "2px 10px", borderRadius: 20, fontWeight: 600 }}>{t("not_achieved")}</span>
                         </div>
                         <div style={{ fontSize: 12, color: V.s5, marginBottom: 6 }}>{obj.description}</div>
                         {obj.example && (
                           <div style={{ fontSize: 11, color: "#EF444480", fontStyle: "italic" }}>💬 "{obj.example}"</div>
                         )}
-                        <div style={{ fontSize: 11, color: "#EF444460", marginTop: 4 }}>Retente cet objectif au prochain call 💪</div>
+                        <div style={{ fontSize: 11, color: "#EF444460", marginTop: 4 }}>{t("retry")}</div>
                       </div>
                     </div>
                   </div>
@@ -2491,9 +2722,9 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
             {objectives.length === 0 && (
               <div style={{ ...card(), textAlign: "center", padding: 60 }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
-                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Aucun objectif encore</div>
-                <div style={{ color: V.s5, fontSize: 13, marginBottom: 24 }}>Analyse un call pour recevoir tes premiers objectifs personnalisés du coach IA.</div>
-                <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 12, color: V.white, fontWeight: 700, fontSize: 14, padding: "12px 28px", cursor: "pointer", fontFamily: "inherit" }}>✍️ Analyser un call</button>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{t("no_objectives")}</div>
+                <div style={{ color: V.s5, fontSize: 13, marginBottom: 24 }}>{t("no_objectives_sub")}</div>
+                <button onClick={() => setPage("new")} style={{ background: V.orange, border: "none", borderRadius: 12, color: V.white, fontWeight: 700, fontSize: 14, padding: "12px 28px", cursor: "pointer", fontFamily: "inherit" }}>{t("analyze_call")}</button>
               </div>
             )}
           </>);
@@ -2767,11 +2998,11 @@ Retourne UNIQUEMENT du JSON valide sans markdown :
                 {(r.globalStrengths?.length > 0 || r.globalImprovements?.length > 0) && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {r.globalStrengths?.length > 0 && <div>
-                      <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>✅ Ce que t'as bien fait</div>
+                      <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>{t("did_well")}</div>
                       {r.globalStrengths.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "5px 10px", background: "#10B98110", borderRadius: 8, marginBottom: 5, borderLeft: "2px solid #10B981" }}>{s}</div>)}
                     </div>}
                     {r.globalImprovements?.length > 0 && <div>
-                      <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>🎯 Ce qu'on travaille</div>
+                      <div style={{ fontSize: 10, color: V.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>{t("working_on")}</div>
                       {r.globalImprovements.map((s,i) => <div key={i} style={{ fontSize: 12, color: V.bg1, padding: "5px 10px", background: `${V.orange}10`, borderRadius: 8, marginBottom: 5, borderLeft: `2px solid ${V.orange}` }}>{s}</div>)}
                     </div>}
                   </div>
